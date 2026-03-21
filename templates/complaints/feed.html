@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Feed{% endblock %}
+
+{% block content %}
+<div class="feed-layout">
+
+  <!-- ─── Main Feed ─────────────────────────────────────────────────── -->
+  <div class="feed-main">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h1 style="font-family:'Space Grotesk',sans-serif; font-size:1.4rem; font-weight:700;">
+        Anonymous Complaint Feed
+      </h1>
+      {% if user.is_authenticated %}
+      <a href="{% url 'complaints:submit' %}" class="btn btn-primary-solid">+ New Complaint</a>
+      {% endif %}
+    </div>
+
+    <!-- Search bar -->
+    <form method="get" style="margin-bottom:1.25rem;">
+      <input type="hidden" name="category" value="{{ active_category }}">
+      <input type="hidden" name="status" value="{{ active_status }}">
+      <input type="text" name="q" value="{{ search_query }}"
+             class="form-control" placeholder="🔍  Search complaints…">
+    </form>
+
+    {% if complaints %}
+      {% for complaint in complaints %}
+      <div class="complaint-card">
+        <div class="complaint-header">
+          <div>
+            <a href="{% url 'complaints:detail' complaint.pk %}" class="complaint-title">
+              {{ complaint.category_icon }} {{ complaint.title }}
+            </a>
+            <div class="complaint-meta" style="margin-top:0.4rem;">
+              <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+              <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+            </div>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">
+            {{ complaint.created_at|timesince }} ago
+          </span>
+        </div>
+
+        <p class="complaint-excerpt">{{ complaint.description }}</p>
+
+        <div class="complaint-footer">
+          <span class="complaint-anon">🔒 Anonymous Student</span>
+          <button class="upvote-btn {% if complaint.id in user_upvoted_ids %}active{% endif %}"
+                  data-id="{{ complaint.pk }}"
+                  {% if not user.is_authenticated %}onclick="window.location='{% url 'users:login' %}'" title="Login to upvote"{% endif %}>
+            ▲ <span class="upvote-count">{{ complaint.upvote_count }}</span>
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-title">No complaints found</div>
+        <p class="empty-state-text">Be the first to raise a concern.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ─── Sidebar Filters ───────────────────────────────────────────── -->
+  <aside class="feed-filters">
+    <div class="filter-title">Category</div>
+    <a href="?{% if search_query %}q={{ search_query }}{% endif %}" class="filter-chip {% if not active_category %}active{% endif %}">All</a>
+    {% for val, label in categories %}
+      <a href="?category={{ val }}{% if active_status %}&status={{ active_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+         class="filter-chip {% if active_category == val %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+
+    <div class="filter-title" style="margin-top:1.5rem;">Status</div>
+    <a href="?{% if active_category %}category={{ active_category }}&{% endif %}{% if search_query %}q={{ search_query }}{% endif %}" class="filter-chip {% if not active_status %}active{% endif %}">All</a>
+    {% for val, label in statuses %}
+      <a href="?status={{ val }}{% if active_category %}&category={{ active_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+         class="filter-chip {% if active_status == val %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </aside>
+
+</div>
+{% endblock %}

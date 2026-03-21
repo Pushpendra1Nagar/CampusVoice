@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f9; margin: 0; padding: 40px 0; }
+  .container { max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+  .header { background: linear-gradient(135deg, #2a52e8, #1a3bc0); padding: 32px 40px; text-align: center; }
+  .header h1 { color: #fff; font-size: 24px; margin: 0; font-weight: 700; }
+  .header p { color: rgba(255,255,255,0.75); margin: 8px 0 0; font-size: 13px; }
+  .body { padding: 32px 40px; }
+  .otp-box { text-align: center; background: #f0f2f9; border-radius: 12px; padding: 24px; margin: 24px 0; }
+  .otp-code { font-size: 42px; font-weight: 700; letter-spacing: 12px; color: #2a52e8; font-family: monospace; }
+  .expiry { color: #888; font-size: 13px; margin-top: 8px; }
+  .warning { background: #fff3cd; border-left: 3px solid #d97706; border-radius: 4px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-top: 16px; }
+  .footer { background: #f8f9fe; padding: 20px 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #e8ecf0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📣 CampusVoice</h1>
+    <p>College Complaint Management System</p>
+  </div>
+  <div class="body">
+    <p>Here is your one-time verification code:</p>
+    <div class="otp-box">
+      <div class="otp-code">{{ code }}</div>
+      <div class="expiry">Valid for 10 minutes only</div>
+    </div>
+    <div class="warning">⚠️ Never share this code with anyone, including CampusVoice staff.</div>
+  </div>
+  <div class="footer">campusvoice.cms@gmail.com &nbsp;|&nbsp; Your voice, protected.</div>
+</div>
+</body>
+</html>

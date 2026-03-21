@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ complaint.title }}{% endblock %}
+{% block content %}
+<div style="max-width:720px; margin:0 auto;">
+  <a href="{% url 'complaints:feed' %}" style="color:var(--text-secondary); font-size:0.875rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px; margin-bottom:1.5rem;">← Back to Feed</a>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+      <div>
+        <h1 style="font-size:1.4rem; font-weight:700; margin-bottom:0.5rem;">{{ complaint.category_icon }} {{ complaint.title }}</h1>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+          <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+        </div>
+      </div>
+      <button class="upvote-btn {% if user_upvoted %}active{% endif %}" data-id="{{ complaint.pk }}"
+        {% if not user.is_authenticated %}onclick="window.location='{% url 'users:login' %}'"{% endif %}
+        style="flex-shrink:0;">
+        ▲ <span class="upvote-count">{{ upvote_count }}</span> Upvotes
+      </button>
+    </div>
+
+    <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.5rem;">
+      🔒 Anonymous Student &nbsp;•&nbsp; {{ complaint.created_at|date:"d M Y, H:i" }}
+    </p>
+
+    <p style="line-height:1.8; white-space:pre-line;">{{ complaint.description }}</p>
+
+    {% if complaint.image %}
+    <div style="margin-top:1.5rem;">
+      <img src="{{ complaint.image.url }}" alt="Complaint evidence"
+           style="max-width:100%; border-radius:var(--radius-sm); border:1px solid var(--border);">
+    </div>
+    {% endif %}
+
+    {% if complaint.admin_remark %}
+    <div style="margin-top:1.5rem; background:var(--info-bg); border-left:3px solid var(--info); border-radius:4px; padding:1rem 1.25rem;">
+      <div style="font-size:0.8rem; font-weight:600; color:var(--info); margin-bottom:0.4rem;">💬 Admin Response</div>
+      <p style="color:var(--text-primary); font-size:0.925rem;">{{ complaint.admin_remark }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

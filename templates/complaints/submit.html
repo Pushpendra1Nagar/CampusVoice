@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Submit Complaint{% endblock %}
+{% block content %}
+<div style="max-width:640px; margin:0 auto;">
+  <div style="margin-bottom:2rem;">
+    <h1 style="font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700;">Submit a Complaint</h1>
+    <p style="color:var(--text-secondary); margin-top:0.4rem;">
+      🔒 Your identity will be hidden from the public feed. Only admins can see who submitted this.
+    </p>
+  </div>
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Broken water heater in Hostel Block B" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select name="category" class="form-control" required>
+          <option value="">— Select a category —</option>
+          <option value="hostel">🏠 Hostel</option>
+          <option value="academics">📚 Academics</option>
+          <option value="infrastructure">🏗️ Infrastructure</option>
+          <option value="library">📖 Library</option>
+          <option value="canteen">🍽️ Canteen</option>
+          <option value="sports">⚽ Sports & Facilities</option>
+          <option value="harassment">🚨 Harassment</option>
+          <option value="other">📋 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea name="description" class="form-control" rows="6"
+          placeholder="Describe your problem in detail. The more specific you are, the faster it can be resolved…" required></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proof / Image (optional)</label>
+        <input type="file" name="image" class="form-control" accept="image/*">
+        <span class="form-help">Upload a photo as evidence. Stored securely on cloud.</span>
+      </div>
+      <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary-solid" style="flex:1;">Submit Complaint</button>
+        <a href="{% url 'complaints:feed' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}My Complaints{% endblock %}
+{% block content %}
+<div style="max-width:800px; margin:0 auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <h1 style="font-family:'Space Grotesk',sans-serif; font-size:1.4rem; font-weight:700;">My Complaints</h1>
+    <a href="{% url 'complaints:submit' %}" class="btn btn-primary-solid">+ New</a>
+  </div>
+
+  {% if complaints %}
+    {% for complaint in complaints %}
+    <div class="complaint-card">
+      <div class="complaint-header">
+        <div>
+          <a href="{% url 'complaints:detail' complaint.pk %}" class="complaint-title">
+            {{ complaint.category_icon }} {{ complaint.title }}
+          </a>
+          <div class="complaint-meta" style="margin-top:0.4rem;">
+            <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+            <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+          </div>
+        </div>
+        <span style="font-size:0.75rem; color:var(--text-muted);">{{ complaint.created_at|date:"d M Y" }}</span>
+      </div>
+      <p class="complaint-excerpt">{{ complaint.description }}</p>
+      <div class="complaint-footer">
+        <span style="font-size:0.8rem; color:var(--text-muted);">▲ {{ complaint.upvote_count }} upvotes</span>
+        {% if complaint.admin_remark %}
+          <span class="badge badge-info" title="{{ complaint.admin_remark }}">💬 Admin replied</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📝</div>
+      <div class="empty-state-title">No complaints yet</div>
+      <p class="empty-state-text">Have an issue? Submit your first complaint — anonymously.</p>
+      <a href="{% url 'complaints:submit' %}" class="btn btn-primary-solid" style="margin-top:1rem;">Submit a Complaint</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
