@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import Count, Q
+from decouple import config
 
 from .models import Complaint, ComplaintUpvote
 from .forms import ComplaintForm
@@ -116,6 +117,32 @@ def my_complaints_view(request):
 # ─── Admin webhook: send email when status changes ───────────────────────────
 
 def _notify_status_change(complaint):
+    import sib_api_v3_sdk
+    from sib_api_v3_sdk.rest import ApiException
+
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = config('BREVO_API_KEY')
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    html_content = render_to_string('emails/status_update.html', {
+        'complaint': complaint,
+        'student_name': complaint.created_by.first_name,
+    })
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": complaint.created_by.email}],
+        sender={"name": "CampusVoice", "email": "campusvoice.cms@gmail.com"},
+        subject=f"[CampusVoice] Complaint status updated: {complaint.get_status_display()}",
+        html_content=html_content,
+    )
+
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except ApiException as e:
+        print(f"Brevo API error: {e}")
     """Called by admin signal when complaint status is updated."""
     student_email = complaint.created_by.email
     subject = f"[CampusVoice] Your complaint status: {complaint.get_status_display()}"

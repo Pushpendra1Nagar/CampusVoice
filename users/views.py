@@ -138,6 +138,31 @@ def resend_otp_view(request):
 # ─── Helper ─────────────────────────────────────────────────────────────────
 
 def _send_otp_email(email, code):
+    import sib_api_v3_sdk
+    from sib_api_v3_sdk.rest import ApiException
+    from django.conf import settings
+
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = config('BREVO_API_KEY')
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    html_content = render_to_string('emails/otp.html', {'code': code})
+
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": email}],
+        sender={"name": "CampusVoice", "email": "campusvoice.cms@gmail.com"},
+        subject="Your CampusVoice Verification Code",
+        html_content=html_content,
+    )
+
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except ApiException as e:
+        print(f"Brevo API error: {e}")
+        raise
     subject = "Your CampusVoice Verification Code"
     html_message = render_to_string('emails/otp.html', {'code': code})
     send_mail(
