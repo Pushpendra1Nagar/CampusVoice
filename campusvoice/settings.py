@@ -113,13 +113,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ─── Email (Gmail SMTP) ───────────────────────────────────────────────────────
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_USE_TLS = False
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='campusvoice.cms@gmail.com')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp-relay.brevo.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = f'CampusVoice <{EMAIL_HOST_USER}>'
+DEFAULT_FROM_EMAIL = 'CampusVoice <campusvoice.cms@gmail.com>'
 
 # ─── OTP Settings ─────────────────────────────────────────────────────────────
 OTP_EXPIRY_MINUTES = 10
