@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from decouple import config
@@ -141,11 +140,9 @@ def resend_otp_view(request):
 
 
 # ─── Helper ─────────────────────────────────────────────────────────────────
-
 def _send_otp_email(email, code):
     import sib_api_v3_sdk
     from sib_api_v3_sdk.rest import ApiException
-    from django.conf import settings
 
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key['api-key'] = config('BREVO_API_KEY')
@@ -167,14 +164,4 @@ def _send_otp_email(email, code):
         api_instance.send_transac_email(send_smtp_email)
     except ApiException as e:
         print(f"Brevo API error: {e}")
-        raise
-    subject = "Your CampusVoice Verification Code"
-    html_message = render_to_string('emails/otp.html', {'code': code})
-    send_mail(
-        subject=subject,
-        message=f"Your OTP is: {code}. Valid for {settings.OTP_EXPIRY_MINUTES} minutes.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        html_message=html_message,
-        fail_silently=False,
-    )
+        raise Exception("Failed to send OTP email")

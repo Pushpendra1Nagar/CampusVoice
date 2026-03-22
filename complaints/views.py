@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import Count, Q
@@ -143,18 +142,3 @@ def _notify_status_change(complaint):
         api_instance.send_transac_email(send_smtp_email)
     except ApiException as e:
         print(f"Brevo API error: {e}")
-    """Called by admin signal when complaint status is updated."""
-    student_email = complaint.created_by.email
-    subject = f"[CampusVoice] Your complaint status: {complaint.get_status_display()}"
-    html_message = render_to_string('emails/status_update.html', {
-        'complaint': complaint,
-        'student_name': complaint.created_by.first_name,
-    })
-    send_mail(
-        subject=subject,
-        message=f"Your complaint '{complaint.title}' is now {complaint.get_status_display()}.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[student_email],
-        html_message=html_message,
-        fail_silently=True,
-    )

@@ -75,6 +75,12 @@ DATABASES = {
     }
 }
 
+# Session settings for Render
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True
+
 # ─── Auth ────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.CustomUser'
 AUTH_PASSWORD_VALIDATORS = [
