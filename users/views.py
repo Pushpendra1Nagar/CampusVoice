@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from decouple import config
 
 from .models import CustomUser, OTPCode
 from .forms import RegistrationForm, OTPVerifyForm, LoginForm, ProfileUpdateForm
@@ -27,8 +28,12 @@ def register_view(request):
                 'department': form.cleaned_data.get('department', ''),
             }
             otp = OTPCode.generate(form.cleaned_data['email'])
-            _send_otp_email(form.cleaned_data['email'], otp.code)
-            messages.success(request, f"OTP sent to {form.cleaned_data['email']}")
+            try:
+                _send_otp_email(form.cleaned_data['email'], otp.code)
+                messages.success(request, f"OTP sent to {form.cleaned_data['email']}")
+            except Exception as e:
+                print(f"Email error: {e}")
+                messages.warning(request, f"Account created but email failed. Your OTP is: {otp.code}")
             return redirect('users:verify_otp')
         else:
             # Show exactly what's wrong
