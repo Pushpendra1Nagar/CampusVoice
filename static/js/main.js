@@ -1,33 +1,42 @@
 // CampusVoice — Main JS
 
-// ─── Dark / Light Mode Toggle ────────────────────────────────────────────
+// Dark/Light mode
 const html = document.documentElement;
 const toggleBtn = document.getElementById('themeToggle');
 const themeIcon = toggleBtn?.querySelector('.theme-icon');
-
 const savedTheme = localStorage.getItem('cv-theme') || 'light';
 html.setAttribute('data-theme', savedTheme);
 if (themeIcon) themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-
 toggleBtn?.addEventListener('click', () => {
-  const current = html.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('cv-theme', next);
   if (themeIcon) themeIcon.textContent = next === 'dark' ? '☀️' : '🌙';
 });
 
-// ─── Upvote (AJAX) ────────────────────────────────────────────────────────
+// Upvote — login required
 document.querySelectorAll('.upvote-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
     const complaintId = btn.dataset.id;
-    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+    const loginUrl = btn.dataset.login;
 
+    // If not logged in, redirect to login
+    if (loginUrl) {
+      window.location.href = loginUrl;
+      return;
+    }
+
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
     try {
       const res = await fetch(`/${complaintId}/upvote/`, {
         method: 'POST',
-        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        headers: { 'X-CSRFToken': csrfToken },
       });
+      if (res.status === 400) {
+        alert('You cannot upvote your own complaint.');
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         btn.classList.toggle('active', data.upvoted);
@@ -40,7 +49,7 @@ document.querySelectorAll('.upvote-btn').forEach(btn => {
   });
 });
 
-// ─── Auto-dismiss alerts ────────────────────────────────────────────────
+// Auto-dismiss alerts
 document.querySelectorAll('.alert').forEach(alert => {
   setTimeout(() => {
     alert.style.transition = 'opacity 0.4s ease';

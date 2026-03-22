@@ -9,4 +9,9 @@ urlpatterns = [
     path('mine/', views.my_complaints_view, name='my_complaints'),
     path('<int:pk>/', views.complaint_detail_view, name='detail'),
     path('<int:pk>/upvote/', views.upvote_view, name='upvote'),
+    path('<int:pk>/edit/', views.edit_complaint_view, name='edit'),
+    path('<int:pk>/delete/', views.delete_complaint_view, name='delete'),
+    # Admin routes
+    path('admin-panel/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('admin-panel/<int:pk>/update/', views.admin_update_complaint_view, name='admin_update'),
 ]

@@ -12,16 +12,18 @@
 </head>
 <body>
 
-<!-- ─── Navbar ──────────────────────────────────────────────────────────── -->
 <nav class="navbar">
   <div class="nav-container">
     <a href="{% url 'complaints:feed' %}" class="nav-brand">
-      <img src="{% static 'images/logo.png' %}" alt="CampusVoice" height="35">
+      <img src="{% static 'images/logo.png' %}" alt="CampusVoice" height="32">
       <span>CampusVoice</span>
     </a>
     <div class="nav-links">
       <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.url_name == 'feed' %}active{% endif %}">Feed</a>
       {% if user.is_authenticated %}
+        {% if user.is_staff or user.is_superuser %}
+          <a href="{% url 'complaints:admin_dashboard' %}" class="nav-link" style="color:var(--warning);font-weight:600;">⚙️ Admin</a>
+        {% endif %}
         <a href="{% url 'complaints:submit' %}" class="nav-link btn-primary">+ Submit</a>
         <a href="{% url 'complaints:my_complaints' %}" class="nav-link">My Complaints</a>
         <a href="{% url 'users:profile' %}" class="nav-link">Profile</a>
@@ -37,7 +39,6 @@
   </div>
 </nav>
 
-<!-- ─── Messages ─────────────────────────────────────────────────────────── -->
 {% if messages %}
 <div class="messages-wrapper">
   {% for message in messages %}
@@ -46,16 +47,13 @@
 </div>
 {% endif %}
 
-<!-- ─── Main Content ──────────────────────────────────────────────────────── -->
 <main class="main-content">
   {% block content %}{% endblock %}
 </main>
 
-<!-- ─── Footer ───────────────────────────────────────────────────────────── -->
 <footer class="footer">
   <div class="footer-container">
-    <p>&copy; 2026 CampusVoice - Your voice, protected.</p>
-    <p class="footer-sub">Powered by anonymous reporting &amp; transparent action.</p>
+    <p>&copy; 2025 CampusVoice — Your voice, protected.</p>
   </div>
 </footer>
 
