@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.conf import settings
 from decouple import config
-
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import CustomUser, OTPCode
 from .forms import RegistrationForm, OTPVerifyForm, LoginForm, ProfileUpdateForm
 
@@ -25,6 +25,8 @@ def register_view(request):
                 'password': form.cleaned_data['password1'],
                 'roll_number': form.cleaned_data.get('roll_number', ''),
                 'department': form.cleaned_data.get('department', ''),
+                'year_of_study': form.cleaned_data.get('year_of_study'),
+                'degree': form.cleaned_data.get('degree', ''),
             }
             otp = OTPCode.generate(form.cleaned_data['email'])
             try:
@@ -69,6 +71,8 @@ def verify_otp_view(request):
                 password=pending['password'],
                 roll_number=pending.get('roll_number'),
                 department=pending.get('department', ''),
+                year_of_study=pending.get('year_of_study'),
+                degree=pending.get('degree', ''),
                 is_email_verified=True,
             )
             del request.session['pending_registration']
@@ -165,3 +169,127 @@ def _send_otp_email(email, code):
     except ApiException as e:
         print(f"Brevo API error: {e}")
         raise Exception("Failed to send OTP email")
+    
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser, login_url='complaints:feed')
+def create_staff_view(request):
+    import secrets
+    import string
+
+    ROLES = [
+        ('dept_user', 'Department User'),
+        ('hod', 'HOD'),
+        ('authority', 'Higher Authority'),
+        ('admin', 'System Admin'),
+    ]
+
+    if request.method == 'POST':
+        email      = request.POST.get('email', '').strip().lower()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
+        role       = request.POST.get('role', '').strip()
+
+        # ── Validation ──────────────────────────────────────────────
+        errors = []
+        if not email:
+            errors.append("Email is required.")
+        if not first_name:
+            errors.append("First name is required.")
+        if not role or role not in dict(ROLES):
+            errors.append("Please select a valid role.")
+        if CustomUser.objects.filter(email=email).exists():
+            errors.append(f"A user with email '{email}' already exists.")
+
+        # Unique username
+        base_username = email.split('@')[0]
+        username = base_username
+        counter = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return render(request, 'users/create_staff.html', {
+                'roles': ROLES,
+                'form_data': request.POST,
+            })
+
+        # ── Create user ─────────────────────────────────────────────
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for _ in range(10))
+
+        try:
+            user = CustomUser.objects.create_user(
+                email=email,
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                password=password,
+                role=role,
+                is_email_verified=True,
+                is_staff=(role == 'admin'),
+            )
+        except Exception as e:
+            messages.error(request, f"Failed to create user: {e}")
+            return render(request, 'users/create_staff.html', {
+                'roles': ROLES,
+                'form_data': request.POST,
+            })
+
+        # ── Send credentials email ───────────────────────────────────
+        try:
+            _send_credentials_email(email, first_name, password, role)
+            messages.success(request, f"Account created for {email} and credentials sent via email.")
+        except Exception as e:
+            messages.warning(
+                request,
+                f"Account created for {email} but email failed to send. "
+                f"Temporary password: {password}"
+            )
+
+        return redirect('users:create_staff')
+
+    return render(request, 'users/create_staff.html', {
+        'roles': ROLES,
+    })
+
+
+def _send_credentials_email(email, name, password, role):
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    role_display = dict([
+        ('dept_user', 'Department User'),
+        ('hod', 'Head of Department'),
+        ('authority', 'Higher Authority'),
+        ('admin', 'System Admin'),
+    ]).get(role, role.title())
+
+    subject = "Your CampusVoice Staff Account Credentials"
+    message = f"""Hi {name},
+
+Your CampusVoice staff account has been created.
+
+  Role      : {role_display}
+  Email     : {email}
+  Password  : {password}
+
+Please log in and change your password immediately.
+
+Regards,
+CampusVoice Team
+"""
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [email],
+        fail_silently=False,
+    )
+
+
+

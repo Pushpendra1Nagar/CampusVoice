@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Create Staff Account{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:0 auto;">
+  <a href="{% url 'complaints:admin_dashboard' %}" style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;margin-bottom:1.5rem;display:inline-block;">← Back to Dashboard</a>
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">Create Staff Account</h1>
+
+  <div class="card">
+    <p style="color:var(--text-secondary);font-size:.875rem;margin-bottom:1.25rem;">
+      A random password will be auto-generated and sent to the staff member's email.
+    </p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div style="padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.875rem;
+          {% if message.tags == 'error' %}background:#fef2f2;color:#dc2626;border:1px solid #fecaca;
+          {% elif message.tags == 'warning' %}background:#fffbeb;color:#d97706;border:1px solid #fde68a;
+          {% else %}background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          <input type="text" name="first_name" class="form-control" required
+                 value="{{ form_data.first_name|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control"
+                 value="{{ form_data.last_name|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" name="email" class="form-control" required
+               value="{{ form_data.email|default:'' }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Role *</label>
+        <select name="role" class="form-control" required>
+          <option value="">— Select Role —</option>
+          {% for val, label in roles %}
+            <option value="{{ val }}" {% if form_data.role == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary-solid btn-full">
+        Create Account &amp; Send Credentials
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

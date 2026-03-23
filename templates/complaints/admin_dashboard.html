@@ -67,6 +67,7 @@
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Student</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Category</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Status</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Level</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Upvotes</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Date</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Action</th>
@@ -89,6 +90,9 @@
           </td>
           <td style="padding:.75rem 1rem;"><span class="badge badge-accent">{{ complaint.get_category_display }}</span></td>
           <td style="padding:.75rem 1rem;"><span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span></td>
+          <td style="padding:.75rem 1rem;">
+            <span class="badge {{ complaint.escalation_badge_class }}">{{ complaint.escalation_level_label }}</span>
+          </td>
           <td style="padding:.75rem 1rem;color:var(--text-secondary);">▲ {{ complaint.upvote_count }}</td>
           <td style="padding:.75rem 1rem;color:var(--text-muted);font-size:.8rem;">{{ complaint.created_at|date:"d M Y" }}</td>
           <td style="padding:.75rem 1rem;">

@@ -28,14 +28,42 @@
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
         <div class="form-group">
-          <label class="form-label">Roll Number</label>
-          <input type="text" name="roll_number" class="form-control" placeholder="">
-        </div>
+            <label class="form-label">Enrollment Number *</label>
+            <input type="text" name="roll_number" class="form-control" 
+                  placeholder="e.g. AZ2060999062" 
+                  pattern="[A-Z]{2}[0-9]{10}" 
+                  title="Enrollment number must be 2 capital letters followed by 10 digits (e.g. AZ2060999062)"
+                  maxlength="12" minlength="12"
+                  oninput="this.value = this.value.toUpperCase()"
+                  required>
+            <span class="form-help">Format: 2 letters + 10 digits (e.g. AZ2060999062)</span>
+          </div>
         <div class="form-group">
           <label class="form-label">Department</label>
           <input type="text" name="department" class="form-control" placeholder="">
         </div>
       </div>
+       <div class="form-group">
+    <label class="form-label">Year of Study *</label>
+    <select name="year_of_study" class="form-control" required>
+      <option value="">— Select Year —</option>
+      <option value="1">1st Year</option>
+      <option value="2">2nd Year</option>
+      <option value="3">3rd Year</option>
+      <option value="4">4th Year</option>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <label class="form-label">Degree Program *</label>
+  <select name="degree" class="form-control" required>
+    <option value="">— Select Degree —</option>
+    <option value="bachelor">Bachelors</option>
+    <option value="master">Masters</option>
+    <option value="phd">PhD / Research</option>
+    <option value="diploma">Diploma</option>
+  </select>
+</div>
       <div class="form-group">
         <label class="form-label">Password</label>
         <input type="password" name="password1" class="form-control" placeholder="" required>

@@ -14,4 +14,5 @@ urlpatterns = [
     # Admin routes
     path('admin-panel/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin-panel/<int:pk>/update/', views.admin_update_complaint_view, name='admin_update'),
+    path('check-escalations/', views.trigger_escalation_view, name='trigger_escalation'),
 ]
