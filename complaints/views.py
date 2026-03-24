@@ -190,3 +190,183 @@ def trigger_escalation_view(request):
         'count': len(escalated),
         'checked_at': timezone.now().isoformat()
     })
+
+
+# ─── Department User Dashboard ────────────────────────────────────────────────
+
+@login_required
+def staff_dashboard_view(request):
+    """Redirects to correct dashboard based on role."""
+    from users.models import Role
+    role = request.user.role
+
+    if role == Role.DEPT_USER:
+        return dept_dashboard_view(request)
+    elif role == Role.HOD:
+        return hod_dashboard_view(request)
+    elif role == Role.AUTHORITY:
+        return authority_dashboard_view(request)
+    elif request.user.is_staff or request.user.is_superuser:
+        return admin_dashboard_view(request)
+    else:
+        messages.error(request, "You don't have staff access.")
+        return redirect('complaints:feed')
+
+
+@login_required
+def dept_dashboard_view(request):
+    """Level 1 — Department User sees complaints from their department at level 1."""
+    from users.models import Role
+    if request.user.role != Role.DEPT_USER:
+        return redirect('complaints:feed')
+
+    complaints = Complaint.objects.filter(
+        escalation_level=1,
+        created_by__department=request.user.department,
+    ).annotate(upvote_count=Count('upvotes')).select_related('created_by').order_by('-created_at')
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+
+    return render(request, 'complaints/dept_dashboard.html', {
+        'complaints': complaints,
+        'total': complaints.count(),
+        'pending': complaints.filter(status='pending').count(),
+        'in_progress': complaints.filter(status='in_progress').count(),
+        'resolved': complaints.filter(status='resolved').count(),
+        'statuses': Complaint.Status.choices,
+        'active_status': status_filter,
+        'role_label': 'Department User',
+        'department': request.user.department,
+    })
+
+
+@login_required
+def hod_dashboard_view(request):
+    """Level 2 — HOD sees complaints escalated to level 2 from their dept."""
+    from users.models import Role
+    if request.user.role != Role.HOD:
+        return redirect('complaints:feed')
+
+    complaints = Complaint.objects.filter(
+        escalation_level=2,
+        created_by__department=request.user.department,
+    ).annotate(upvote_count=Count('upvotes')).select_related('created_by').order_by('-created_at')
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+
+    return render(request, 'complaints/dept_dashboard.html', {
+        'complaints': complaints,
+        'total': complaints.count(),
+        'pending': complaints.filter(status='pending').count(),
+        'in_progress': complaints.filter(status='in_progress').count(),
+        'resolved': complaints.filter(status='resolved').count(),
+        'statuses': Complaint.Status.choices,
+        'active_status': status_filter,
+        'role_label': 'HOD',
+        'department': request.user.department,
+    })
+
+
+@login_required
+def authority_dashboard_view(request):
+    """Level 3 — Higher Authority sees all complaints escalated to level 3."""
+    from users.models import Role
+    if request.user.role != Role.AUTHORITY:
+        return redirect('complaints:feed')
+
+    complaints = Complaint.objects.filter(
+        escalation_level=3,
+    ).annotate(upvote_count=Count('upvotes')).select_related('created_by').order_by('-created_at')
+
+    status_filter = request.GET.get('status', '')
+    category_filter = request.GET.get('category', '')
+    if status_filter:
+        complaints = complaints.filter(status=status_filter)
+    if category_filter:
+        complaints = complaints.filter(category=category_filter)
+
+    return render(request, 'complaints/dept_dashboard.html', {
+        'complaints': complaints,
+        'total': complaints.count(),
+        'pending': complaints.filter(status='pending').count(),
+        'in_progress': complaints.filter(status='in_progress').count(),
+        'resolved': complaints.filter(status='resolved').count(),
+        'statuses': Complaint.Status.choices,
+        'categories': Complaint.Category.choices,
+        'active_status': status_filter,
+        'active_category': category_filter,
+        'role_label': 'Higher Authority',
+        'department': 'All Departments',
+    })
+
+
+@login_required
+def staff_update_complaint_view(request, pk):
+    """Dept/HOD/Authority can update status + add digital signature remark."""
+    from users.models import Role
+    from django.utils import timezone
+
+    complaint = get_object_or_404(Complaint, pk=pk)
+
+    # Access control — only correct level can update
+    role = request.user.role
+    if role == Role.DEPT_USER and complaint.escalation_level != 1:
+        messages.error(request, "This complaint is not at your level.")
+        return redirect('complaints:staff_dashboard')
+    if role == Role.HOD and complaint.escalation_level != 2:
+        messages.error(request, "This complaint is not at your level.")
+        return redirect('complaints:staff_dashboard')
+    if role == Role.AUTHORITY and complaint.escalation_level != 3:
+        messages.error(request, "This complaint is not at your level.")
+        return redirect('complaints:staff_dashboard')
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        remark = request.POST.get('admin_remark', '').strip()
+        signature = request.POST.get('digital_signature', '').strip()
+
+        if not signature:
+            messages.error(request, "Digital signature is required to update a complaint.")
+            return render(request, 'complaints/staff_update.html', {
+                'complaint': complaint, 'statuses': Complaint.Status.choices
+            })
+
+        old_status = complaint.status
+        complaint.status = new_status
+
+        # Append signed remark with timestamp
+        level_label = {
+            Role.DEPT_USER: 'Dept. User',
+            Role.HOD: 'HOD',
+            Role.AUTHORITY: 'Higher Authority',
+        }.get(role, 'Staff')
+
+        timestamp = timezone.now().strftime('%d %b %Y %H:%M')
+        signed_remark = (
+            f"\n\n— [{level_label}] {request.user.get_full_name()} "
+            f"| {timestamp}\n"
+            f"Signature: {signature}\n"
+            f"Action: Changed status to {dict(Complaint.Status.choices).get(new_status)}\n"
+            f"Remark: {remark}"
+        )
+        complaint.admin_remark = (complaint.admin_remark or '') + signed_remark
+        complaint.save()
+
+        # Notify student
+        if new_status != old_status:
+            try:
+                _notify_status_change(complaint)
+            except Exception as e:
+                print(f"Email error: {e}")
+
+        messages.success(request, f"✅ Complaint updated and digitally signed.")
+        return redirect('complaints:staff_dashboard')
+
+    return render(request, 'complaints/staff_update.html', {
+        'complaint': complaint,
+        'statuses': Complaint.Status.choices,
+    })

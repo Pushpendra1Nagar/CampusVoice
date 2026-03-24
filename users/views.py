@@ -185,13 +185,19 @@ def create_staff_view(request):
         ('admin', 'System Admin'),
     ]
 
+    from .models import Role
+    recent_staff = CustomUser.objects.exclude(
+        role=Role.STUDENT
+    ).order_by('-date_joined')[:10]
+
     if request.method == 'POST':
         email      = request.POST.get('email', '').strip().lower()
         first_name = request.POST.get('first_name', '').strip()
         last_name  = request.POST.get('last_name', '').strip()
         role       = request.POST.get('role', '').strip()
+        department = request.POST.get('department', '').strip()
+        password   = request.POST.get('password', '').strip()
 
-        # ── Validation ──────────────────────────────────────────────
         errors = []
         if not email:
             errors.append("Email is required.")
@@ -199,10 +205,11 @@ def create_staff_view(request):
             errors.append("First name is required.")
         if not role or role not in dict(ROLES):
             errors.append("Please select a valid role.")
+        if not password or len(password) < 8:
+            errors.append("Password must be at least 8 characters.")
         if CustomUser.objects.filter(email=email).exists():
             errors.append(f"A user with email '{email}' already exists.")
 
-        # Unique username
         base_username = email.split('@')[0]
         username = base_username
         counter = 1
@@ -216,11 +223,8 @@ def create_staff_view(request):
             return render(request, 'users/create_staff.html', {
                 'roles': ROLES,
                 'form_data': request.POST,
+                'recent_staff': recent_staff,
             })
-
-        # ── Create user ─────────────────────────────────────────────
-        alphabet = string.ascii_letters + string.digits
-        password = ''.join(secrets.choice(alphabet) for _ in range(10))
 
         try:
             user = CustomUser.objects.create_user(
@@ -230,6 +234,7 @@ def create_staff_view(request):
                 last_name=last_name,
                 password=password,
                 role=role,
+                department=department,
                 is_email_verified=True,
                 is_staff=(role == 'admin'),
             )
@@ -238,58 +243,63 @@ def create_staff_view(request):
             return render(request, 'users/create_staff.html', {
                 'roles': ROLES,
                 'form_data': request.POST,
+                'recent_staff': recent_staff,
             })
 
-        # ── Send credentials email ───────────────────────────────────
         try:
             _send_credentials_email(email, first_name, password, role)
-            messages.success(request, f"Account created for {email} and credentials sent via email.")
+            messages.success(request, f"✅ Account created for {email}. Credentials sent via email.")
         except Exception as e:
-            messages.warning(
-                request,
-                f"Account created for {email} but email failed to send. "
-                f"Temporary password: {password}"
-            )
+            messages.warning(request, f"Account created but email failed. Password: {password}")
 
         return redirect('users:create_staff')
 
     return render(request, 'users/create_staff.html', {
         'roles': ROLES,
+        'recent_staff': recent_staff,
     })
 
 
 def _send_credentials_email(email, name, password, role):
-    from django.core.mail import send_mail
-    from django.conf import settings
+    import sib_api_v3_sdk
+    from sib_api_v3_sdk.rest import ApiException
 
-    role_display = dict([
-        ('dept_user', 'Department User'),
-        ('hod', 'Head of Department'),
-        ('authority', 'Higher Authority'),
-        ('admin', 'System Admin'),
-    ]).get(role, role.title())
+    role_display = {
+        'dept_user': 'Department User',
+        'hod': 'Head of Department',
+        'authority': 'Higher Authority',
+        'admin': 'System Admin',
+    }.get(role, role.title())
 
-    subject = "Your CampusVoice Staff Account Credentials"
-    message = f"""Hi {name},
-
-Your CampusVoice staff account has been created.
-
-  Role      : {role_display}
-  Email     : {email}
-  Password  : {password}
-
-Please log in and change your password immediately.
-
-Regards,
-CampusVoice Team
-"""
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = config('BREVO_API_KEY')
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
     )
 
-
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": email}],
+        sender={"name": "CampusVoice", "email": "campusvoice.cms@gmail.com"},
+        subject="Your CampusVoice Staff Account Credentials",
+        html_content=f"""
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid #e2e5f0;">
+          <h2 style="color:#2a52e8;">📣 CampusVoice Staff Account</h2>
+          <p>Hi <strong>{name}</strong>, your account has been created.</p>
+          <div style="background:#f0f2f9;border-radius:8px;padding:20px;margin:16px 0;">
+            <p style="margin:6px 0;"><strong>Role:</strong> {role_display}</p>
+            <p style="margin:6px 0;"><strong>Login Email:</strong> {email}</p>
+            <p style="margin:6px 0;"><strong>Password:</strong> 
+              <code style="background:#fff;padding:4px 10px;border-radius:6px;font-size:1.1rem;letter-spacing:2px;border:1px solid #ddd;">{password}</code>
+            </p>
+          </div>
+          <p>Login at: <a href="https://campusvoice-bcw4.onrender.com/auth/login/">campusvoice-bcw4.onrender.com</a></p>
+          <p style="color:#888;font-size:13px;">Please save your password — password reset is not available.</p>
+        </div>
+        """
+    )
+    try:
+        api_instance.send_transac_email(send_smtp_email)
+    except ApiException as e:
+        print(f"Brevo error: {e}")
+        raise Exception("Failed to send credentials email")
 

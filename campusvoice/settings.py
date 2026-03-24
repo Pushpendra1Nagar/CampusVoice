@@ -41,6 +41,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'complaints.middleware.EscalationMiddleware', # Custom escalation check
 ]
 
 ROOT_URLCONF = 'campusvoice.urls'
@@ -80,6 +81,15 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = True
+
+# Cache for escalation throttling
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+    }
+}
+
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.CustomUser'
