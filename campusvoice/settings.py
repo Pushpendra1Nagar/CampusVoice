@@ -90,6 +90,7 @@ CACHES = {
     }
 }
 
+GUNICORN_TIMEOUT = 120
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.CustomUser'
