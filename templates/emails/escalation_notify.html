@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family:sans-serif;background:#f0f2f9;margin:0;padding:40px 0;">
+<div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;
+     overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.10);">
+
+  <div style="background:linear-gradient(135deg,#d97706,#b45309);padding:28px 36px;">
+    <h1 style="color:#fff;font-size:20px;margin:0;font-weight:700;">
+      ⚠️ Complaint Escalated to {{ level_label }}
+    </h1>
+    <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:13px;">
+      Action required — this complaint needs your attention
+    </p>
+  </div>
+
+  <div style="padding:28px 36px;">
+    <p>A complaint has been escalated to your level because it was not resolved in time.</p>
+
+    <div style="background:#fef3c7;border-left:4px solid #d97706;
+         border-radius:4px;padding:16px 20px;margin:16px 0;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:6px;">
+        {{ complaint.category_icon }} {{ complaint.title }}
+      </div>
+      <p style="color:#555;font-size:14px;margin:0;">
+        {{ complaint.description|truncatechars:200 }}
+      </p>
+    </div>
+
+    <table style="width:100%;font-size:13px;border-collapse:collapse;margin:16px 0;">
+      <tr>
+        <td style="padding:6px 0;color:#888;width:140px;">Category</td>
+        <td style="padding:6px 0;font-weight:600;">{{ complaint.get_category_display }}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#888;">Department</td>
+        <td style="padding:6px 0;font-weight:600;">{{ complaint.created_by.department }}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#888;">Escalation Level</td>
+        <td style="padding:6px 0;font-weight:600;">{{ complaint.escalation_level_label }}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#888;">Submitted</td>
+        <td style="padding:6px 0;">{{ complaint.created_at|date:"d M Y, H:i" }}</td>
+      </tr>
+    </table>
+
+    <a href="https://campusvoice-bcw4.onrender.com/staff-dashboard/"
+       style="display:block;background:#2a52e8;color:#fff;text-decoration:none;
+              text-align:center;padding:14px;border-radius:10px;font-weight:700;
+              font-size:15px;margin-top:20px;">
+      View in My Dashboard →
+    </a>
+  </div>
+
+  <div style="background:#f8f9fe;padding:16px 36px;text-align:center;
+       font-size:12px;color:#999;border-top:1px solid #e8ecf0;">
+    campusvoice.cms@gmail.com &nbsp;|&nbsp; Your voice, protected.
+  </div>
+</div>
+</body>
+</html>

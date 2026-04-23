@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}{{ role_label }} Dashboard{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+        📋 {{ role_label }} Dashboard
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;margin-top:.25rem;">
+        Department: <strong>{{ department }}</strong> &nbsp;•&nbsp;
+        Showing complaints assigned to your level
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;">{{ total }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">At Your Level</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--warning);">{{ pending }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Pending</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--info);">{{ in_progress }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">In Progress</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--success);">{{ resolved }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Resolved</div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <form method="get" style="display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+    <select name="status" class="form-control" style="width:180px;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      {% for val,label in statuses %}
+        <option value="{{ val }}" {% if active_status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if categories %}
+    <select name="category" class="form-control" style="width:180px;" onchange="this.form.submit()">
+      <option value="">All Categories</option>
+      {% for val,label in categories %}
+        <option value="{{ val }}" {% if active_category == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    <a href="{% url 'complaints:staff_dashboard' %}" class="btn btn-secondary">Reset</a>
+  </form>
+
+  <!-- Complaints -->
+  {% if complaints %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Complaint</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Student</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Status</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Level</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Time at Level</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:600;">{{ complaint.category_icon }} {{ complaint.title|truncatechars:45 }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem;">{{ complaint.description|truncatechars:60 }}</div>
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:500;">{{ complaint.created_by.get_full_name }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">{{ complaint.created_by.email }}</div>
+            <div style="font-size:.72rem;color:var(--accent);">{{ complaint.created_by.department }} • {{ complaint.created_by.get_degree_display }}</div>
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <span class="badge {{ complaint.escalation_badge_class }}">{{ complaint.escalation_level_label }}</span>
+          </td>
+          <td style="padding:.75rem 1rem;font-size:.8rem;color:var(--text-muted);">
+            {% with hours=complaint.hours_at_current_level %}
+              {% if hours < 1 %}
+                <span style="color:var(--success);">Just arrived</span>
+              {% elif hours < 20 %}
+                <span style="color:var(--info);">{{ hours|floatformat:0 }}h</span>
+              {% else %}
+                <span style="color:var(--danger);font-weight:600;">⚠️ {{ hours|floatformat:0 }}h — Near escalation</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <a href="{% url 'complaints:staff_update' complaint.pk %}" 
+               class="btn btn-primary-solid" style="padding:.3rem .75rem;font-size:.8rem;">
+              Update
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">✅</div>
+      <div class="empty-state-title">No complaints at your level</div>
+      <p class="empty-state-text">All clear — no pending complaints assigned to you.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

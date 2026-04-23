@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Add Update{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:0 auto;">
+  <a href="{% url 'complaints:detail' complaint.pk %}"
+     style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;
+            margin-bottom:1.5rem;display:inline-block;">← Back to Complaint</a>
+
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem;
+      font-weight:700;margin-bottom:1.5rem;">Add Follow-up Information</h1>
+
+  <div class="card" style="margin-bottom:1rem;">
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem;">
+      Complaint #{{ complaint.id }}
+    </div>
+    <div style="font-weight:600;">{{ complaint.category_icon }} {{ complaint.title }}</div>
+    <span class="badge {{ complaint.status_badge_class }}" style="margin-top:.4rem;">
+      {{ complaint.get_status_display }}
+    </span>
+  </div>
+
+  <div class="card">
+    <p style="color:var(--text-secondary);font-size:.875rem;margin-bottom:1.25rem;">
+      Use this to add more details, attach context, or provide updates on your situation.
+      Staff will be notified of your update.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Your Update *</label>
+        <textarea name="content" class="form-control" rows="5"
+          placeholder="Example: I forgot to mention the room number is 204. The problem has now spread to 3 more rooms..."
+          maxlength="1000" required id="updateContent"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:.25rem;">
+          <span id="charCount" class="form-help">0 / 1000</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;">
+        <button type="submit" class="btn btn-primary-solid">Submit Update</button>
+        <a href="{% url 'complaints:detail' complaint.pk %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('updateContent').addEventListener('input', function() {
+  document.getElementById('charCount').textContent = this.value.length + ' / 1000';
+});
+</script>
+{% endblock %}

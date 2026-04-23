@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Update Complaint{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:0 auto;">
+  <a href="{% url 'complaints:admin_dashboard' %}" style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:1.5rem;">← Back to Dashboard</a>
+
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">Update Complaint</h1>
+
+  <!-- Complaint Info -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap;">
+      <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+      <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+      <span style="font-size:.8rem;color:var(--text-muted);margin-left:auto;">▲ {{ complaint.upvotes.count }} upvotes</span>
+    </div>
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem;">{{ complaint.category_icon }} {{ complaint.title }}</h2>
+    <p style="color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin-bottom:1rem;">{{ complaint.description }}</p>
+    {% if complaint.image %}
+    <img src="{{ complaint.image.url }}" alt="Evidence" style="max-width:100%;border-radius:8px;border:1px solid var(--border);">
+    {% endif %}
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--text-muted);">
+      <strong>Student:</strong> {{ complaint.created_by.get_full_name }} ({{ complaint.created_by.email }})
+      {% if complaint.created_by.roll_number %} • Roll: {{ complaint.created_by.roll_number }}{% endif %}
+      {% if complaint.created_by.department %} • Dept: {{ complaint.created_by.department }}{% endif %}
+      <br>Submitted: {{ complaint.created_at|date:"d M Y, H:i" }}
+    </div>
+  </div>
+
+  <!-- Update Form -->
+  <div class="card">
+    <h3 style="font-weight:700;margin-bottom:1.25rem;">Update Status & Remark</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Update Status *</label>
+        <select name="status" class="form-control" required>
+          {% for val,label in form.fields.status.choices %}
+            <option value="{{ val }}" {% if complaint.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Admin Remark <span style="color:var(--text-muted);font-weight:400;">(visible to student via email)</span></label>
+        <textarea name="admin_remark" class="form-control" rows="4" placeholder="Explain the action taken or next steps...">{{ complaint.admin_remark }}</textarea>
+      </div>
+      <div style="display:flex;gap:1rem;">
+        <button type="submit" class="btn btn-primary-solid">Save Changes & Notify Student</button>
+        <a href="{% url 'complaints:admin_dashboard' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

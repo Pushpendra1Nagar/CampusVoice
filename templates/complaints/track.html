@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Track Complaint{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:0 auto;">
+  <div style="text-align:center;margin-bottom:2rem;">
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;">
+      🔍 Track a Complaint
+    </h1>
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-top:.4rem;">
+      Enter a complaint ID to see its current status — no login needed.
+    </p>
+  </div>
+
+  <!-- Search Box -->
+  <form method="get" style="display:flex;gap:.75rem;margin-bottom:2rem;">
+    <input type="number" name="id" value="{{ complaint_id }}"
+           class="form-control" placeholder="Enter Complaint ID (e.g. 47)"
+           style="flex:1;" min="1" autofocus>
+    <button type="submit" class="btn btn-primary-solid" style="white-space:nowrap;">
+      Track →
+    </button>
+  </form>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  {% if complaint %}
+  <div class="card">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+         margin-bottom:1rem;">
+      <div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;">
+          Complaint #{{ complaint.id }}
+        </div>
+        <h2 style="font-size:1.1rem;font-weight:700;">
+          {{ complaint.category_icon }} {{ complaint.title }}
+        </h2>
+      </div>
+      <span class="badge {{ complaint.status_badge_class }}" style="flex-shrink:0;">
+        {{ complaint.get_status_display }}
+      </span>
+    </div>
+
+    <!-- Badges -->
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+      <span class="badge {{ complaint.escalation_badge_class }}">
+        {{ complaint.escalation_level_label }}
+      </span>
+      <span style="font-size:.78rem;color:var(--text-muted);">
+        Submitted {{ complaint.created_at|timesince }} ago
+      </span>
+    </div>
+
+    <p style="color:var(--text-secondary);line-height:1.7;margin-bottom:1.5rem;">
+      {{ complaint.description }}
+    </p>
+
+    <!-- Timeline -->
+    <div style="border-top:1px solid var(--border);padding-top:1.25rem;">
+      <div style="font-size:.8rem;font-weight:700;color:var(--text-muted);
+           text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;">
+        📋 Complaint Journey
+      </div>
+
+      <div style="position:relative;padding-left:2rem;">
+        <!-- Line -->
+        <div style="position:absolute;left:.6rem;top:0;bottom:0;width:2px;
+             background:var(--border);"></div>
+
+        <!-- Step 1: Submitted -->
+        <div style="position:relative;margin-bottom:1.25rem;">
+          <div style="position:absolute;left:-1.45rem;width:12px;height:12px;
+               border-radius:50%;background:var(--success);border:2px solid var(--bg-card);"></div>
+          <div style="font-weight:600;font-size:.875rem;">✅ Complaint Submitted</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">
+            {{ complaint.created_at|date:"d M Y, H:i" }}
+          </div>
+        </div>
+
+        <!-- Step 2: L1 Assigned -->
+        <div style="position:relative;margin-bottom:1.25rem;">
+          <div style="position:absolute;left:-1.45rem;width:12px;height:12px;
+               border-radius:50%;background:var(--info);border:2px solid var(--bg-card);"></div>
+          <div style="font-weight:600;font-size:.875rem;">👤 Assigned to Department</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">
+            Complaint received by department-level team
+          </div>
+        </div>
+
+        <!-- Step 3: Escalated to L2 -->
+        {% if complaint.escalation_level >= 2 %}
+        <div style="position:relative;margin-bottom:1.25rem;">
+          <div style="position:absolute;left:-1.45rem;width:12px;height:12px;
+               border-radius:50%;background:var(--warning);border:2px solid var(--bg-card);"></div>
+          <div style="font-weight:600;font-size:.875rem;">🎓 Escalated to HOD</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">
+            Not resolved in 24 hours — escalated to Head of Department
+            {% if complaint.escalated_at %}
+              on {{ complaint.escalated_at|date:"d M Y" }}
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Step 4: Escalated to L3 -->
+        {% if complaint.escalation_level >= 3 %}
+        <div style="position:relative;margin-bottom:1.25rem;">
+          <div style="position:absolute;left:-1.45rem;width:12px;height:12px;
+               border-radius:50%;background:var(--danger);border:2px solid var(--bg-card);"></div>
+          <div style="font-weight:600;font-size:.875rem;">🏛️ Escalated to Higher Authority</div>
+          <div style="font-size:.78rem;color:var(--text-muted);">
+            Not resolved in 48 hours — escalated to Principal/Dean
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Step 5: Resolved / Current Status -->
+        <div style="position:relative;">
+          <div style="position:absolute;left:-1.45rem;width:12px;height:12px;
+               border-radius:50%;
+               background:{% if complaint.status == 'resolved' %}var(--success){% elif complaint.status == 'rejected' %}var(--danger){% elif complaint.status == 'withdrawn' %}var(--text-muted){% else %}var(--border){% endif %};
+               border:2px solid var(--bg-card);"></div>
+          <div style="font-weight:600;font-size:.875rem;">
+            {% if complaint.status == 'resolved' %}✅ Resolved
+            {% elif complaint.status == 'rejected' %}❌ Rejected
+            {% elif complaint.status == 'withdrawn' %}↩️ Withdrawn by Student
+            {% elif complaint.status == 'in_progress' %}🔄 In Progress
+            {% else %}⏳ Awaiting Response
+            {% endif %}
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted);">
+            Last updated {{ complaint.updated_at|timesince }} ago
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin remark (public) -->
+    {% if complaint.admin_remark and complaint.status == 'resolved' %}
+    <div style="margin-top:1.25rem;background:var(--success-bg);border-left:3px solid var(--success);
+         border-radius:4px;padding:.875rem 1rem;">
+      <div style="font-size:.75rem;font-weight:700;color:var(--success);margin-bottom:.3rem;">
+        ✅ Resolution Note
+      </div>
+      <p style="font-size:.875rem;">
+        This complaint has been resolved by the college administration.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div style="text-align:center;margin-top:2rem;">
+    <p style="color:var(--text-muted);font-size:.8rem;">
+      🔒 Student identity is never shown publicly.
+      <a href="{% url 'complaints:feed' %}" style="color:var(--accent);">Browse all complaints</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

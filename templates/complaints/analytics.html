@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+        📊 Analytics Dashboard
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;">
+        Data since {{ since|date:"d M Y" }}
+      </p>
+    </div>
+    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+      <!-- Date range picker -->
+      <form method="get" style="display:flex;gap:.5rem;align-items:center;">
+        <select name="range" class="form-control" style="width:140px;"
+                onchange="this.form.submit()">
+          <option value="7"  {% if range_filter == 7  %}selected{% endif %}>Last 7 days</option>
+          <option value="30" {% if range_filter == 30 %}selected{% endif %}>Last 30 days</option>
+          <option value="90" {% if range_filter == 90 %}selected{% endif %}>Last 3 months</option>
+          <option value="365"{% if range_filter == 365%}selected{% endif %}>Last year</option>
+        </select>
+      </form>
+      <!-- Export PDF -->
+      <a href="{% url 'complaints:export_pdf' %}" class="btn btn-secondary">
+        📄 Export PDF
+      </a>
+      <!-- Weekly Digest -->
+      <a href="{% url 'complaints:weekly_digest' %}" class="btn btn-secondary"
+         onclick="return confirm('Send weekly digest to all HODs now?')">
+        📧 Send Digest
+      </a>
+    </div>
+  </div>
+
+  <!-- Top Stats -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="text-align:center;padding:1.25rem;">
+      <div style="font-size:2rem;font-weight:700;color:var(--accent);">{{ total_all }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Total Complaints</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.25rem;">
+      <div style="font-size:2rem;font-weight:700;color:var(--success);">{{ total_resolved }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Resolved</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.25rem;">
+      <div style="font-size:2rem;font-weight:700;color:var(--warning);">{{ overall_rate }}%</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Resolution Rate</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.25rem;">
+      <div style="font-size:2rem;font-weight:700;color:var(--danger);">{{ escalated_count }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Escalated</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+
+    <!-- Category Chart -->
+    <div class="card">
+      <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+        Complaints by Category
+      </h3>
+      <canvas id="catChart" height="220"></canvas>
+    </div>
+
+    <!-- Status Pie -->
+    <div class="card">
+      <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+        Status Breakdown
+      </h3>
+      <canvas id="statusChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+
+    <!-- Weekly trend -->
+    <div class="card">
+      <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+        Complaints Per Week (Last 8 Weeks)
+      </h3>
+      <canvas id="weeklyChart" height="220"></canvas>
+    </div>
+
+    <!-- Dept complaints -->
+    <div class="card">
+      <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+        Complaints by Department
+      </h3>
+      <canvas id="deptChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Resolution Rate Table -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+      📈 Resolution Rate by Department
+    </h3>
+    {% if dept_resolution %}
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Department</th>
+          <th style="padding:.75rem 1rem;text-align:center;font-weight:600;color:var(--text-secondary);">Total</th>
+          <th style="padding:.75rem 1rem;text-align:center;font-weight:600;color:var(--text-secondary);">Resolved</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in dept_resolution %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem 1rem;font-weight:600;">{{ row.dept }}</td>
+          <td style="padding:.75rem 1rem;text-align:center;">{{ row.total }}</td>
+          <td style="padding:.75rem 1rem;text-align:center;color:var(--success);">{{ row.resolved }}</td>
+          <td style="padding:.75rem 1rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:{{ row.rate }}%;
+                     background:{% if row.rate >= 75 %}var(--success){% elif row.rate >= 40 %}var(--warning){% else %}var(--danger){% endif %};
+                     border-radius:4px;transition:width .3s;"></div>
+              </div>
+              <span style="font-weight:700;font-size:.875rem;min-width:40px;
+                    color:{% if row.rate >= 75 %}var(--success){% elif row.rate >= 40 %}var(--warning){% else %}var(--danger){% endif %};">
+                {{ row.rate }}%
+              </span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p style="color:var(--text-muted);">No data yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- SLA Table -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 style="font-weight:700;font-size:.95rem;margin:0;">
+        ⏱️ SLA — Average Resolution Time
+      </h3>
+      <a href="{% url 'complaints:export_pdf' %}" class="btn btn-secondary"
+         style="font-size:.8rem;padding:.3rem .75rem;">Export PDF</a>
+    </div>
+    {% if sla_data %}
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Department</th>
+          <th style="padding:.75rem 1rem;text-align:center;font-weight:600;color:var(--text-secondary);">Avg Hours</th>
+          <th style="padding:.75rem 1rem;text-align:center;font-weight:600;color:var(--text-secondary);">Complaints</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">SLA Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in sla_data %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem 1rem;font-weight:600;">{{ row.dept }}</td>
+          <td style="padding:.75rem 1rem;text-align:center;font-weight:700;
+               color:{{ row.color }};">{{ row.avg_hours }}h</td>
+          <td style="padding:.75rem 1rem;text-align:center;color:var(--text-secondary);">
+            {{ row.count }}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <span style="font-weight:600;color:{{ row.color }};">{{ row.label }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:.75rem;color:var(--text-muted);margin-top:.75rem;">
+      ✅ Good = under 24h &nbsp;|&nbsp; ⚠️ Needs Improvement = 24–48h &nbsp;|&nbsp; ❌ Poor = over 48h
+    </p>
+    {% else %}
+      <p style="color:var(--text-muted);">No resolved complaints yet to calculate SLA.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+const textColor = isDark ? '#8892b0' : '#5a5f7a';
+
+const catLabels   = {{ cat_labels|safe }};
+const catCounts   = {{ cat_counts|safe }};
+const statusLabels= {{ status_labels|safe }};
+const statusCounts= {{ status_counts|safe }};
+const weekLabels  = {{ weekly_labels|safe }};
+const weekCounts  = {{ weekly_counts|safe }};
+const deptLabels  = {{ dept_labels|safe }};
+const deptCounts  = {{ dept_counts|safe }};
+
+const COLORS = ['#2a52e8','#16a34a','#d97706','#dc2626','#0284c7','#7c3aed','#db2777','#0f6e56'];
+
+// Category Bar
+new Chart(document.getElementById('catChart'), {
+  type: 'bar',
+  data: {
+    labels: catLabels,
+    datasets: [{
+      data: catCounts,
+      backgroundColor: COLORS,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { color: textColor } },
+      x: { grid: { display: false }, ticks: { color: textColor } }
+    }
+  }
+});
+
+// Status Doughnut
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: statusLabels,
+    datasets: [{ data: statusCounts, backgroundColor: ['#d97706','#0284c7','#16a34a','#dc2626','#9ca3af'], borderWidth: 0 }]
+  },
+  options: {
+    responsive: true, cutout: '65%',
+    plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 16 } } }
+  }
+});
+
+// Weekly Line
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'line',
+  data: {
+    labels: weekLabels,
+    datasets: [{
+      label: 'Complaints',
+      data: weekCounts,
+      borderColor: '#2a52e8',
+      backgroundColor: 'rgba(42,82,232,0.1)',
+      fill: true, tension: 0.4, pointBackgroundColor: '#2a52e8'
+    }]
+  },
+  options: {
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { color: textColor } },
+      x: { grid: { display: false }, ticks: { color: textColor } }
+    }
+  }
+});
+
+// Dept Bar
+new Chart(document.getElementById('deptChart'), {
+  type: 'bar',
+  data: {
+    labels: deptLabels,
+    datasets: [{
+      data: deptCounts,
+      backgroundColor: '#0f6e56',
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: textColor } },
+      y: { grid: { display: false }, ticks: { color: textColor } }
+    }
+  }
+});
+</script>
+{% endblock %}

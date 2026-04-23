@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Withdraw Complaint{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:3rem auto;">
+  <div class="card" style="text-align:center;padding:2.5rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">↩️</div>
+    <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">
+      Withdraw this complaint?
+    </h1>
+    <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+      {{ complaint.category_icon }} <strong>{{ complaint.title }}</strong>
+    </p>
+    <p style="font-size:.875rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+      Use this if you resolved the issue yourself or it's no longer relevant.
+      Staff will be notified.
+    </p>
+    <form method="post" style="text-align:left;">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Reason (optional)</label>
+        <textarea name="reason" class="form-control" rows="3"
+          placeholder="e.g. The issue was fixed by the hostel warden directly..."></textarea>
+      </div>
+      <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem;">
+        <button type="submit" class="btn btn-secondary"
+                style="color:var(--text-muted);border-color:var(--border);">
+          Yes, Withdraw
+        </button>
+        <a href="{% url 'complaints:detail' complaint.pk %}" class="btn btn-primary-solid">
+          Keep Complaint Active
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

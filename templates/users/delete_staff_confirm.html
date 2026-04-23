@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Delete Staff Account{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:3rem auto;">
+  <div class="card" style="text-align:center;padding:2.5rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
+    <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:.5rem;">
+      Delete Staff Account?
+    </h1>
+    <p style="color:var(--text-secondary);margin-bottom:.5rem;">
+      <strong>{{ staff_user.get_full_name }}</strong><br>
+      {{ staff_user.email }} — {{ staff_user.get_role_display }}
+    </p>
+    <div style="background:var(--danger-bg);border-radius:8px;padding:.875rem;
+         margin:1rem 0;font-size:.875rem;color:var(--danger);">
+      ⚠️ This action is permanent and cannot be undone.<br>
+      All complaint handling history linked to this account will remain<br>
+      but the login will be permanently removed.
+    </div>
+    <p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+      Consider <strong>Deactivating</strong> instead — it blocks login but keeps all records.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger-solid">
+          Yes, Delete Permanently
+        </button>
+      </form>
+      <a href="{% url 'users:manage_staff' %}" class="btn btn-secondary">
+        Cancel — Deactivate Instead
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CampusVoice{% endblock %} — College Complaint System</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
+
+  <style>
+    /* ===== ROOT VARIABLES ===== */
+    :root {
+      --nav-height: 64px;
+      --nav-bg: rgba(255, 255, 255, 0.85);
+      --nav-border: rgba(0, 0, 0, 0.06);
+      --nav-shadow: 0 1px 20px rgba(0, 0, 0, 0.06);
+      --nav-link-color: #4a5568;
+      --nav-link-hover-color: #1a202c;
+      --nav-link-hover-bg: rgba(99, 102, 241, 0.07);
+      --nav-active-color: #4f46e5;
+      --nav-active-bg: rgba(79, 70, 229, 0.1);
+      --brand-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --dropdown-bg: #ffffff;
+      --dropdown-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.06);
+      --dropdown-border: rgba(0, 0, 0, 0.06);
+      --dropdown-hover: #f7f7ff;
+      --dropdown-danger: #ef4444;
+      --dropdown-danger-bg: rgba(239, 68, 68, 0.06);
+      --sidebar-bg: #ffffff;
+      --sidebar-overlay: rgba(0, 0, 0, 0.45);
+      --sidebar-width: 300px;
+      --sidebar-divider: #f1f5f9;
+      --footer-bg: #f8fafc;
+      --footer-border: #e2e8f0;
+      --avatar-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --success: #10b981;
+    }
+
+    [data-theme="dark"] {
+      --nav-bg: rgba(15, 23, 42, 0.9);
+      --nav-border: rgba(255, 255, 255, 0.06);
+      --nav-shadow: 0 1px 20px rgba(0, 0, 0, 0.3);
+      --nav-link-color: #94a3b8;
+      --nav-link-hover-color: #f1f5f9;
+      --nav-link-hover-bg: rgba(129, 140, 248, 0.08);
+      --nav-active-color: #818cf8;
+      --nav-active-bg: rgba(129, 140, 248, 0.12);
+      --dropdown-bg: #1e293b;
+      --dropdown-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      --dropdown-border: rgba(255, 255, 255, 0.06);
+      --dropdown-hover: #2a3750;
+      --dropdown-danger: #f87171;
+      --dropdown-danger-bg: rgba(248, 113, 113, 0.08);
+      --sidebar-bg: #0f172a;
+      --sidebar-divider: #1e293b;
+      --footer-bg: #0f172a;
+      --footer-border: #1e293b;
+      --warning: #fbbf24;
+      --info: #60a5fa;
+      --success: #34d399;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-height);
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--nav-border);
+      box-shadow: var(--nav-shadow);
+      z-index: 1000;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .navbar.scrolled {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    /* ===== BRAND ===== */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .nav-brand img {
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-brand:hover img { transform: scale(1.05); }
+
+    .nav-brand-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    /* ===== NAV LINKS (Desktop) ===== */
+    .nav-links-desktop {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--nav-link-color);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .nav-link svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .nav-link:hover {
+      color: var(--nav-link-hover-color);
+      background: var(--nav-link-hover-bg);
+    }
+
+    .nav-link.active {
+      color: var(--nav-active-color);
+      background: var(--nav-active-bg);
+      font-weight: 600;
+    }
+
+    /* ===== ROLE-BASED NAV HIGHLIGHT ===== */
+    .nav-link--admin {
+      color: var(--warning) !important;
+      font-weight: 600 !important;
+    }
+    .nav-link--admin:hover {
+      background: rgba(245, 158, 11, 0.1) !important;
+    }
+    .nav-link--staff {
+      color: var(--info) !important;
+      font-weight: 600 !important;
+    }
+    .nav-link--staff:hover {
+      background: rgba(59, 130, 246, 0.1) !important;
+    }
+    .nav-link--student {
+      color: var(--success) !important;
+      font-weight: 600 !important;
+    }
+    .nav-link--student:hover {
+      background: rgba(16, 185, 129, 0.1) !important;
+    }
+
+    /* ===== RIGHT SECTION ===== */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--nav-border);
+      margin: 0 8px;
+    }
+
+    /* ===== PROFILE DROPDOWN ===== */
+    .profile-dropdown { position: relative; }
+
+    .profile-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px 5px 5px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .profile-trigger:hover { background: var(--nav-link-hover-bg); }
+
+    .profile-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--avatar-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .profile-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--nav-link-hover-color);
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-chevron {
+      width: 16px;
+      height: 16px;
+      stroke: var(--nav-link-color);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .profile-dropdown:hover .profile-chevron,
+    .profile-dropdown.open .profile-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* ===== DROPDOWN MENU ===== */
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 230px;
+      background: var(--dropdown-bg);
+      border: 1px solid var(--dropdown-border);
+      border-radius: 14px;
+      box-shadow: var(--dropdown-shadow);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px) scale(0.96);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1100;
+      overflow: hidden;
+      padding: 6px;
+    }
+
+    .profile-dropdown:hover .dropdown-menu,
+    .profile-dropdown.open .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    .dropdown-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--dropdown-border);
+      margin: 0 -6px;
+      margin-bottom: 6px;
+    }
+
+    .dropdown-header-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--nav-link-hover-color);
+    }
+
+    .dropdown-header-email {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.78rem;
+      color: var(--nav-link-color);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.88rem;
+      color: var(--nav-link-color);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-item:hover {
+      color: var(--nav-link-hover-color);
+      background: var(--dropdown-hover);
+    }
+
+    .dropdown-item svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .dropdown-sep {
+      height: 1px;
+      background: var(--dropdown-border);
+      margin: 4px 8px;
+    }
+
+    .dropdown-item--danger { color: var(--dropdown-danger); }
+    .dropdown-item--danger:hover {
+      color: var(--dropdown-danger);
+      background: var(--dropdown-danger-bg);
+    }
+    .dropdown-item--admin { color: var(--warning); font-weight: 600; }
+    .dropdown-item--admin:hover {
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .dropdown-item--staff { color: var(--info); font-weight: 600; }
+    .dropdown-item--staff:hover {
+      color: var(--info);
+      background: rgba(59, 130, 246, 0.08);
+    }
+    .dropdown-item--student { color: var(--success); font-weight: 600; }
+    .dropdown-item--student:hover {
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      color: var(--nav-link-color);
+    }
+
+    .theme-toggle:hover {
+      background: var(--nav-link-hover-bg);
+      color: var(--nav-active-color);
+    }
+
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle .icon-sun  { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+    /* ===== HAMBURGER ===== */
+    .hamburger {
+      display: none;
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      color: var(--nav-link-color);
+      transition: all 0.2s ease;
+      z-index: 1002;
+      padding: 0;
+    }
+
+    .hamburger:hover {
+      background: var(--nav-link-hover-bg);
+      color: var(--nav-active-color);
+    }
+
+    .hamburger-lines {
+      width: 20px;
+      height: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hamburger-lines span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: currentColor;
+      border-radius: 2px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center;
+    }
+
+    .hamburger.open .hamburger-lines span:nth-child(1) {
+      transform: translateY(6px) rotate(45deg);
+    }
+    .hamburger.open .hamburger-lines span:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    .hamburger.open .hamburger-lines span:nth-child(3) {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
+    /* ===== SIDEBAR OVERLAY ===== */
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--sidebar-overlay);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.35s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .sidebar-overlay.open { opacity: 1; visibility: visible; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      top: 0; right: 0;
+      width: var(--sidebar-width);
+      max-width: calc(100vw - 60px);
+      height: 100vh;
+      height: 100dvh;
+      background: var(--sidebar-bg);
+      z-index: 1001;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+      overflow-y: auto;
+    }
+
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-divider);
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .sidebar-brand img {
+      height: 30px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .sidebar-brand-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: var(--brand-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sidebar-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--nav-link-color);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-close:hover {
+      background: var(--nav-link-hover-bg);
+      color: var(--nav-active-color);
+    }
+
+    .sidebar-close svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .sidebar-user-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--sidebar-divider);
+      flex-shrink: 0;
+    }
+
+    .sidebar-user-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--avatar-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .sidebar-user-info { overflow: hidden; }
+
+    .sidebar-user-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--nav-link-hover-color);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-user-email {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.76rem;
+      color: var(--nav-link-color);
+      margin-top: 1px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .sidebar-label {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--nav-link-color);
+      opacity: 0.5;
+      padding: 14px 12px 6px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.92rem;
+      color: var(--nav-link-color);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-link:hover {
+      color: var(--nav-link-hover-color);
+      background: var(--nav-link-hover-bg);
+    }
+
+    .sidebar-link.active {
+      color: var(--nav-active-color);
+      background: var(--nav-active-bg);
+      font-weight: 600;
+    }
+
+    .sidebar-link svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .sidebar-link--danger { color: var(--dropdown-danger); }
+    .sidebar-link--danger:hover {
+      color: var(--dropdown-danger);
+      background: var(--dropdown-danger-bg);
+    }
+    .sidebar-link--admin  { color: var(--warning) !important; font-weight: 600 !important; }
+    .sidebar-link--admin:hover  { background: rgba(245, 158, 11, 0.1) !important; }
+    .sidebar-link--staff  { color: var(--info) !important;    font-weight: 600 !important; }
+    .sidebar-link--staff:hover  { background: rgba(59, 130, 246, 0.1) !important; }
+    .sidebar-link--student { color: var(--success) !important; font-weight: 600 !important; }
+    .sidebar-link--student:hover { background: rgba(16, 185, 129, 0.1) !important; }
+
+    .sidebar-divider-line {
+      height: 1px;
+      background: var(--sidebar-divider);
+      margin: 6px 12px;
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--sidebar-divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .sidebar-theme-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--nav-link-color);
+    }
+
+    .sidebar-theme-label svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toggle-switch {
+      width: 48px;
+      height: 26px;
+      border-radius: 13px;
+      border: none;
+      background: #e2e8f0;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s ease;
+    }
+
+    [data-theme="dark"] .toggle-switch { background: var(--nav-active-color); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] .toggle-switch::after { transform: translateX(22px); }
+
+    /* ===== MESSAGES ===== */
+    .messages-wrapper {
+      margin-top: var(--nav-height);
+      padding: 12px 24px;
+      max-width: 1320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .alert {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: alertSlide 0.3s ease;
+    }
+
+    @keyframes alertSlide {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== MAIN ===== */
+    .main-content {
+      margin-top: var(--nav-height);
+      min-height: calc(100vh - var(--nav-height) - 80px);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: var(--footer-bg);
+      border-top: 1px solid var(--footer-border);
+      padding: 24px 0;
+      transition: all 0.3s ease;
+    }
+
+    .footer-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+      text-align: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--nav-link-color);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .nav-links-desktop  { display: none !important; }
+      .profile-dropdown   { display: none !important; }
+      .nav-divider.desktop-only { display: none !important; }
+      .hamburger          { display: flex !important; }
+    }
+
+    @media (min-width: 901px) {
+      .sidebar,
+      .sidebar-overlay { display: none !important; }
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--nav-border); border-radius: 4px; }
+
+    .sidebar.open .sidebar-link,
+    .sidebar.open .sidebar-label {
+      animation: sbFadeIn 0.35s ease forwards;
+      opacity: 0;
+    }
+    .sidebar.open .sidebar-nav > *:nth-child(1)  { animation-delay: 0.04s; }
+    .sidebar.open .sidebar-nav > *:nth-child(2)  { animation-delay: 0.07s; }
+    .sidebar.open .sidebar-nav > *:nth-child(3)  { animation-delay: 0.10s; }
+    .sidebar.open .sidebar-nav > *:nth-child(4)  { animation-delay: 0.13s; }
+    .sidebar.open .sidebar-nav > *:nth-child(5)  { animation-delay: 0.16s; }
+    .sidebar.open .sidebar-nav > *:nth-child(6)  { animation-delay: 0.19s; }
+    .sidebar.open .sidebar-nav > *:nth-child(7)  { animation-delay: 0.22s; }
+    .sidebar.open .sidebar-nav > *:nth-child(8)  { animation-delay: 0.25s; }
+    .sidebar.open .sidebar-nav > *:nth-child(9)  { animation-delay: 0.28s; }
+    .sidebar.open .sidebar-nav > *:nth-child(10) { animation-delay: 0.31s; }
+    .sidebar.open .sidebar-nav > *:nth-child(11) { animation-delay: 0.34s; }
+    .sidebar.open .sidebar-nav > *:nth-child(12) { animation-delay: 0.37s; }
+    .sidebar.open .sidebar-nav > *:nth-child(13) { animation-delay: 0.40s; }
+    .sidebar.open .sidebar-nav > *:nth-child(14) { animation-delay: 0.43s; }
+    .sidebar.open .sidebar-nav > *:nth-child(15) { animation-delay: 0.46s; }
+    .sidebar.open .sidebar-nav > *:nth-child(16) { animation-delay: 0.49s; }
+
+    @keyframes sbFadeIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    body.sidebar-open { overflow: hidden; }
+  </style>
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+
+    <!-- BRAND -->
+    <a href="{% url 'complaints:feed' %}" class="nav-brand">
+      <img src="{% static 'images/logo.png' %}" alt="CampusVoice Logo">
+      <span class="nav-brand-text">CampusVoice</span>
+    </a>
+
+    <!-- ======================= -->
+    <!-- DESKTOP LINKS           -->
+    <!-- ======================= -->
+    <div class="nav-links-desktop">
+
+      <!-- Feed (always visible) -->
+      <a href="{% url 'complaints:feed' %}"
+         class="nav-link {% if request.resolver_match.url_name == 'feed' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Feed
+      </a>
+
+      {% if user.is_authenticated %}
+
+        {# ════════════════════════════════ #}
+        {# ROLE-BASED DASHBOARD LINKS      #}
+        {# ════════════════════════════════ #}
+
+        {% if user.is_staff or user.is_superuser %}
+          {# — ADMIN — #}
+          <a href="{% url 'complaints:admin_dashboard' %}"
+             class="nav-link nav-link--admin {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Admin
+          </a>
+
+          <a href="{% url 'users:manage_staff' %}"
+             class="nav-link nav-link--admin {% if request.resolver_match.url_name == 'manage_staff' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Manage Staff
+          </a>
+
+          <a href="{% url 'users:create_staff' %}"
+             class="nav-link {% if request.resolver_match.url_name == 'create_staff' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <line x1="19" y1="8" x2="19" y2="14"/>
+              <line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+            Add Staff
+          </a>
+
+        {% elif user.role == 'dept_user' or user.role == 'hod' or user.role == 'authority' %}
+          {# — STAFF — #}
+          <a href="{% url 'complaints:staff_dashboard' %}"
+             class="nav-link nav-link--staff {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+            My Dashboard
+          </a>
+
+        {% else %}
+          {# — STUDENT — #}
+          <a href="{% url 'complaints:student_dashboard' %}"
+             class="nav-link nav-link--student {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            My Dashboard
+          </a>
+        {% endif %}
+
+        {# ════════════════════════════════ #}
+        {# SHARED AUTHENTICATED LINKS      #}
+        {# ════════════════════════════════ #}
+        <a href="{% url 'complaints:submit' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'submit' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Submit
+        </a>
+
+        {# My Complaints — only for students #}
+        {% if not user.is_staff and not user.is_superuser and user.role != 'dept_user' and user.role != 'hod' and user.role != 'authority' %}
+          <a href="{% url 'complaints:my_complaints' %}"
+             class="nav-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            My Complaints
+          </a>
+        {% endif %}
+
+      {% else %}
+        {# ════════════════════════════════ #}
+        {# GUEST LINKS                     #}
+        {# ════════════════════════════════ #}
+        <a href="{% url 'complaints:track' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'track' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Track
+        </a>
+
+        {# ── Stats — visible to guests ── #}
+        <a href="{% url 'complaints:public_stats' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'public_stats' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6"  y1="20" x2="6"  y2="14"/>
+          </svg>
+          Stats
+        </a>
+
+        <a href="{% url 'users:login' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Login
+        </a>
+
+        <a href="{% url 'users:register' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+          Register
+        </a>
+      {% endif %}
+
+    </div>{# end .nav-links-desktop #}
+
+    <!-- RIGHT SECTION -->
+    <div class="nav-right">
+
+      {% if user.is_authenticated %}
+        <div class="nav-divider desktop-only"></div>
+
+        <!-- ================================= -->
+        <!-- PROFILE DROPDOWN                  -->
+        <!-- ================================= -->
+        <div class="profile-dropdown" id="profileDropdown">
+          <button class="profile-trigger" type="button">
+            <div class="profile-avatar">
+              {{ user.username|make_list|first|upper }}
+            </div>
+            <span class="profile-name">{{ user.username }}</span>
+            <svg class="profile-chevron" viewBox="0 0 24 24">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          <div class="dropdown-menu">
+
+            <!-- Header -->
+            <div class="dropdown-header">
+              <div class="dropdown-header-name">{{ user.get_full_name|default:user.username }}</div>
+              <div class="dropdown-header-email">{{ user.email|default:"No email set" }}</div>
+            </div>
+
+            <!-- Edit Profile -->
+            <a href="{% url 'users:profile' %}" class="dropdown-item">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              Edit Profile
+            </a>
+
+            <!-- Change Password -->
+            <a href="{% url 'users:change_password' %}" class="dropdown-item">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Change Password
+            </a>
+
+            <div class="dropdown-sep"></div>
+
+            {# ── ROLE-BASED DASHBOARD IN DROPDOWN ── #}
+            {% if user.is_staff or user.is_superuser %}
+              {# Admin dashboard links #}
+              <a href="{% url 'complaints:admin_dashboard' %}" class="dropdown-item dropdown-item--admin">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+                Admin Dashboard
+              </a>
+
+              <a href="{% url 'users:manage_staff' %}" class="dropdown-item dropdown-item--admin">
+                <svg viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Manage Staff
+              </a>
+
+            {% elif user.role == 'dept_user' or user.role == 'hod' or user.role == 'authority' %}
+              {# Staff dashboard link #}
+              <a href="{% url 'complaints:staff_dashboard' %}" class="dropdown-item dropdown-item--staff">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+                My Dashboard
+              </a>
+
+            {% else %}
+              {# Student dashboard link #}
+              <a href="{% url 'complaints:student_dashboard' %}" class="dropdown-item dropdown-item--student">
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                My Dashboard
+              </a>
+
+              <a href="{% url 'complaints:my_complaints' %}" class="dropdown-item">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                My Complaints
+              </a>
+            {% endif %}
+
+            <div class="dropdown-sep"></div>
+
+            <!-- Logout -->
+            <a href="{% url 'users:logout' %}" class="dropdown-item dropdown-item--danger">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Logout
+            </a>
+
+          </div>
+        </div>{# end .profile-dropdown #}
+      {% endif %}
+
+      <div class="nav-divider"></div>
+
+      <!-- THEME TOGGLE -->
+      <button class="theme-toggle" id="themeToggleDesktop" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <!-- HAMBURGER (mobile only) -->
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <div class="hamburger-lines">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
+
+    </div>{# end .nav-right #}
+  </div>
+</nav>
+
+<!-- ========== SIDEBAR OVERLAY ========== -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ============================== -->
+<!-- SIDEBAR (Mobile)               -->
+<!-- ============================== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <a href="{% url 'complaints:feed' %}" class="sidebar-brand">
+      <img src="{% static 'images/logo.png' %}" alt="CampusVoice Logo">
+      <span class="sidebar-brand-text">CampusVoice</span>
+    </a>
+    <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
+      <svg viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  {% if user.is_authenticated %}
+  <div class="sidebar-user-card">
+    <div class="sidebar-user-avatar">{{ user.username|make_list|first|upper }}</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+      <div class="sidebar-user-email">{{ user.email|default:"No email" }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <nav class="sidebar-nav">
+    <span class="sidebar-label">Menu</span>
+
+    <!-- Feed -->
+    <a href="{% url 'complaints:feed' %}"
+       class="sidebar-link {% if request.resolver_match.url_name == 'feed' %}active{% endif %}">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Feed
+    </a>
+
+    {% if user.is_authenticated %}
+
+      {# ════════════════════════════════ #}
+      {# ADMIN SECTION                   #}
+      {# ════════════════════════════════ #}
+      {% if user.is_staff or user.is_superuser %}
+        <div class="sidebar-divider-line"></div>
+        <span class="sidebar-label">Administration</span>
+
+        <a href="{% url 'complaints:admin_dashboard' %}"
+           class="sidebar-link sidebar-link--admin {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Admin Dashboard
+        </a>
+
+        <a href="{% url 'users:manage_staff' %}"
+           class="sidebar-link sidebar-link--admin {% if request.resolver_match.url_name == 'manage_staff' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Manage Staff
+        </a>
+
+        <a href="{% url 'users:create_staff' %}"
+           class="sidebar-link {% if request.resolver_match.url_name == 'create_staff' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+          Create Staff Account
+        </a>
+
+      {# ════════════════════════════════ #}
+      {# STAFF SECTION                   #}
+      {# ════════════════════════════════ #}
+      {% elif user.role == 'dept_user' or user.role == 'hod' or user.role == 'authority' %}
+        <div class="sidebar-divider-line"></div>
+        <span class="sidebar-label">Staff Panel</span>
+
+        <a href="{% url 'complaints:staff_dashboard' %}"
+           class="sidebar-link sidebar-link--staff {% if request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+          My Dashboard
+        </a>
+
+      {# ════════════════════════════════ #}
+      {# STUDENT SECTION                 #}
+      {# ════════════════════════════════ #}
+      {% else %}
+        <div class="sidebar-divider-line"></div>
+        <span class="sidebar-label">Student Panel</span>
+
+        <a href="{% url 'complaints:student_dashboard' %}"
+           class="sidebar-link sidebar-link--student {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          My Dashboard
+        </a>
+
+        <a href="{% url 'complaints:my_complaints' %}"
+           class="sidebar-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          My Complaints
+        </a>
+      {% endif %}
+
+      {# ════════════════════════════════ #}
+      {# SHARED ACTIONS                  #}
+      {# ════════════════════════════════ #}
+      <div class="sidebar-divider-line"></div>
+      <span class="sidebar-label">Actions</span>
+
+      <a href="{% url 'complaints:submit' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'submit' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Submit Complaint
+      </a>
+
+      {# ════════════════════════════════ #}
+      {# ACCOUNT SECTION                 #}
+      {# ════════════════════════════════ #}
+      <div class="sidebar-divider-line"></div>
+      <span class="sidebar-label">Account</span>
+
+      <a href="{% url 'users:profile' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Edit Profile
+      </a>
+
+      <a href="{% url 'users:change_password' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Change Password
+      </a>
+
+      <a href="{% url 'users:logout' %}" class="sidebar-link sidebar-link--danger">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </a>
+
+    {% else %}
+      {# ════════════════════════════════ #}
+      {# GUEST LINKS IN SIDEBAR          #}s
+      {# ════════════════════════════════ #}
+      <div class="sidebar-divider-line"></div>
+      <span class="sidebar-label">Explore</span>
+
+      <a href="{% url 'complaints:track' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'track' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Track Complaint
+      </a>
+
+      {# ── Stats ── #}
+      <a href="{% url 'complaints:public_stats' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'public_stats' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6"  y1="20" x2="6"  y2="14"/>
+        </svg>
+        Public Stats
+      </a>
+
+      <div class="sidebar-divider-line"></div>
+      <span class="sidebar-label">Account</span>
+
+      <a href="{% url 'users:login' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Login
+      </a>
+
+      <a href="{% url 'users:register' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" y1="8" x2="19" y2="14"/>
+          <line x1="22" y1="11" x2="16" y2="11"/>
+        </svg>
+        Register
+      </a>
+    {% endif %}
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-theme-label">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      Dark Mode
+    </div>
+    <button class="toggle-switch" id="themeToggleSidebar"></button>
+  </div>
+</aside>
+
+<!-- ========== MESSAGES ========== -->
+{% if messages %}
+<div class="messages-wrapper">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ========== MAIN ========== -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="footer-container">
+    <p>&copy; 2026 CampusVoice — Your voice, protected.</p>
+  </div>
+</footer>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+(function () {
+
+  /* ===== THEME ===== */
+  const html  = document.documentElement;
+  const saved = localStorage.getItem('theme');
+  if (saved) html.setAttribute('data-theme', saved);
+
+  function toggleTheme() {
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }
+
+  var dtBtn = document.getElementById('themeToggleDesktop');
+  var sbBtn = document.getElementById('themeToggleSidebar');
+  if (dtBtn) dtBtn.addEventListener('click', toggleTheme);
+  if (sbBtn) sbBtn.addEventListener('click', toggleTheme);
+
+  /* ===== SIDEBAR ===== */
+  var hamburger = document.getElementById('hamburger');
+  var sidebar   = document.getElementById('sidebar');
+  var overlay   = document.getElementById('sidebarOverlay');
+  var closeBtn  = document.getElementById('sidebarClose');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    hamburger.classList.add('open');
+    document.body.classList.add('sidebar-open');
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    hamburger.classList.remove('open');
+    document.body.classList.remove('sidebar-open');
+  }
+
+  if (hamburger) hamburger.addEventListener('click', function () {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeSidebar();
+  });
+
+  /* ===== NAVBAR SCROLL ===== */
+  var navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', function () {
+    navbar.classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  /* ===== AUTO DISMISS ALERTS ===== */
+  document.querySelectorAll('.alert').forEach(function (el) {
+    setTimeout(function () {
+      el.style.transition = 'all 0.4s ease';
+      el.style.opacity    = '0';
+      el.style.transform  = 'translateY(-10px)';
+      setTimeout(function () { el.remove(); }, 400);
+    }, 5000);
+  });
+
+  /* ===== PROFILE DROPDOWN ===== */
+  var profileDD = document.getElementById('profileDropdown');
+  if (profileDD) {
+    var trigger = profileDD.querySelector('.profile-trigger');
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      profileDD.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (!profileDD.contains(e.target)) profileDD.classList.remove('open');
+    });
+  }
+
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

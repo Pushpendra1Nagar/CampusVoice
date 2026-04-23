@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+
+  <!-- Welcome Header -->
+  <div style="margin-bottom:1.75rem;">
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;">
+      👋 Welcome back, {{ request.user.first_name }}
+    </h1>
+    <p style="color:var(--text-secondary);font-size:.875rem;margin-top:.3rem;">
+      {{ request.user.department }}
+      {% if request.user.year_of_study %} • Year {{ request.user.year_of_study }}{% endif %}
+      {% if request.user.degree %} • {{ request.user.get_degree_display }}{% endif %}
+    </p>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem;">
+    {% for label,val,color in stats %}
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:{{ color }};">{{ val }}</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem;">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Unread messages alert -->
+  {% if unread_messages %}
+  <div style="background:var(--accent-light);border:1.5px solid var(--accent);border-radius:8px;
+       padding:.875rem 1.25rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;
+       align-items:center;">
+    <span style="color:var(--accent);font-weight:600;font-size:.9rem;">
+      💬 You have {{ unread_messages }} unread message{{ unread_messages|pluralize }} from staff
+    </span>
+    <a href="{% url 'complaints:my_complaints' %}" style="color:var(--accent);font-size:.85rem;font-weight:600;">
+      View →
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions -->
+  <div style="display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;">
+    <a href="{% url 'complaints:submit' %}" class="btn btn-primary-solid">
+      + Submit New Complaint
+    </a>
+    <a href="{% url 'complaints:my_complaints' %}" class="btn btn-secondary">
+      View All My Complaints
+    </a>
+    <a href="{% url 'complaints:feed' %}" class="btn btn-secondary">
+      Browse Public Feed
+    </a>
+  </div>
+
+  <!-- Recent Complaints -->
+  <div>
+    <h2 style="font-weight:700;font-size:1rem;margin-bottom:1rem;color:var(--text-secondary);
+         text-transform:uppercase;letter-spacing:.06em;">Recent Complaints</h2>
+
+    {% if recent %}
+      {% for complaint in recent %}
+      <div class="complaint-card">
+        <div class="complaint-header">
+          <div>
+            <a href="{% url 'complaints:detail' complaint.pk %}" class="complaint-title">
+              {{ complaint.category_icon }} {{ complaint.title }}
+            </a>
+            <div class="complaint-meta" style="margin-top:.4rem;">
+              <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+              <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+
+              {% if complaint.escalation_level > 1 %}
+                <span class="badge {{ complaint.escalation_badge_class }}">
+                  {{ complaint.escalation_level_label }}
+                </span>
+              {% endif %}
+
+              {# ✅ FIXED — uses @property instead of .filter() in template #}
+              {% if complaint.has_unread_staff_messages %}
+                <span class="badge badge-info">💬 New message</span>
+              {% endif %}
+
+            </div>
+          </div>
+          <span style="font-size:.75rem;color:var(--text-muted);">
+            {{ complaint.created_at|timesince }} ago
+          </span>
+        </div>
+
+        <p class="complaint-excerpt">{{ complaint.description }}</p>
+
+        {% if complaint.admin_remark %}
+        <div style="font-size:.8rem;color:var(--info);margin-top:.5rem;">
+          💬 Staff has responded —
+          <a href="{% url 'complaints:detail' complaint.pk %}" style="color:var(--info);">
+            view reply
+          </a>
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+
+      {% if total > 5 %}
+      <div style="text-align:center;margin-top:1rem;">
+        <a href="{% url 'complaints:my_complaints' %}" style="color:var(--accent);font-size:.875rem;">
+          View all {{ total }} complaints →
+        </a>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="empty-state" style="padding:2.5rem;">
+        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-title">No complaints yet</div>
+        <p class="empty-state-text">
+          Submit your first complaint anonymously and securely.
+        </p>
+        <a href="{% url 'complaints:submit' %}" class="btn btn-primary-solid"
+           style="margin-top:1rem;">Submit a Complaint</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

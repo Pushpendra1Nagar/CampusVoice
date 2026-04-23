@@ -1,0 +1,36 @@
+<div class="complaint-card" style="{% if complaint.status == 'resolved' %}opacity:.85;{% endif %}">
+  <div class="complaint-header">
+    <div>
+      <a href="{% url 'complaints:detail' complaint.pk %}" class="complaint-title">
+        {{ complaint.category_icon }} {{ complaint.title }}
+      </a>
+      <div class="complaint-meta" style="margin-top:.4rem;">
+        <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+        <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+        {% if complaint.escalation_level > 1 %}
+          <span class="badge {{ complaint.escalation_badge_class }}">
+            {{ complaint.escalation_level_label }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+    <span style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;">
+      {{ complaint.created_at|timesince }} ago
+    </span>
+  </div>
+  <p class="complaint-excerpt">{{ complaint.description }}</p>
+  <div class="complaint-footer">
+    <span class="complaint-anon">🔒 Anonymous Student</span>
+    {% if user.is_authenticated %}
+      <button class="upvote-btn {% if complaint.id in user_upvoted_ids %}active{% endif %}"
+              data-id="{{ complaint.pk }}">
+        ▲ <span class="upvote-count">{{ complaint.upvote_count }}</span>
+      </button>
+    {% else %}
+      <button class="upvote-btn" data-id="{{ complaint.pk }}"
+              data-login="{% url 'users:login' %}">
+        ▲ <span class="upvote-count">{{ complaint.upvote_count }}</span>
+      </button>
+    {% endif %}
+  </div>
+</div>

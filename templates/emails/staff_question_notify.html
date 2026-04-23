@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="font-family:sans-serif;background:#f0f2f9;margin:0;padding:40px 0;">
+<div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;
+     overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+  <div style="background:linear-gradient(135deg,#0284c7,#0369a1);padding:24px 32px;">
+    <h1 style="color:#fff;font-size:18px;margin:0;">💬 Staff Has a Question</h1>
+    <p style="color:rgba(255,255,255,.8);font-size:13px;margin:6px 0 0;">
+      About your complaint #{{ complaint.id }}
+    </p>
+  </div>
+  <div style="padding:24px 32px;">
+    <p>The college staff is reviewing your complaint and has a question for you:</p>
+    <div style="background:#e0f2fe;border-left:4px solid #0284c7;
+         border-radius:4px;padding:14px 18px;margin:14px 0;font-size:14px;">
+      {{ message_text }}
+    </div>
+    <div style="background:#f0f2f9;border-radius:8px;padding:12px 16px;
+         font-size:13px;color:#666;">
+      <strong>Your complaint:</strong> {{ complaint.category_icon }} {{ complaint.title }}
+    </div>
+    <a href="https://campusvoice-bcw4.onrender.com/{{ complaint.id }}/"
+       style="display:block;background:#0284c7;color:#fff;text-decoration:none;
+              text-align:center;padding:12px;border-radius:8px;font-weight:700;margin-top:16px;">
+      View & Reply to Question →
+    </a>
+    <p style="font-size:12px;color:#888;margin-top:14px;text-align:center;">
+      Log in to CampusVoice to reply to this question.
+    </p>
+  </div>
+  <div style="background:#f8f9fe;padding:14px 32px;text-align:center;
+       font-size:12px;color:#999;border-top:1px solid #eee;">
+    campusvoice.cms@gmail.com &nbsp;|&nbsp; Your voice, protected.
+  </div>
+</div>
+</body></html>

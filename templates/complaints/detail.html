@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% block title %}{{ complaint.title }}{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:0 auto;">
+
+  <!-- Breadcrumb -->
+  <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.25rem;">
+    <a href="{% url 'complaints:feed' %}" style="color:var(--text-muted);text-decoration:none;">Feed</a>
+    <span style="margin:0 .4rem;">›</span>
+    <span>Complaint #{{ complaint.id }}</span>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+         margin-bottom:1rem;">
+      <div>
+        <h1 style="font-size:1.2rem;font-weight:700;margin-bottom:.5rem;">
+          {{ complaint.category_icon }} {{ complaint.title }}
+        </h1>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+          <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+          <span class="badge {{ complaint.escalation_badge_class }}">{{ complaint.escalation_level_label }}</span>
+        </div>
+      </div>
+      {% if user.is_authenticated %}
+      <button class="upvote-btn {% if user_upvoted %}active{% endif %}"
+              data-id="{{ complaint.pk }}" style="flex-shrink:0;">
+        ▲ <span class="upvote-count">{{ upvote_count }}</span>
+      </button>
+      {% endif %}
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:.875rem;margin-bottom:1rem;">
+      🔒 Anonymous Student &nbsp;•&nbsp; {{ complaint.created_at|date:"d M Y, H:i" }}
+    </p>
+
+    <p style="line-height:1.8;white-space:pre-line;">{{ complaint.description }}</p>
+
+    {% if complaint.image %}
+    <div style="margin-top:1.25rem;">
+      <img src="{{ complaint.image.url }}" alt="Evidence"
+           style="max-width:100%;border-radius:var(--radius-sm);
+                  border:1px solid var(--border);">
+    </div>
+    {% endif %}
+
+    {% if complaint.admin_remark %}
+    <div style="margin-top:1.25rem;background:var(--info-bg);border-left:3px solid var(--info);
+         border-radius:4px;padding:.875rem 1rem;">
+      <div style="font-size:.75rem;font-weight:700;color:var(--info);margin-bottom:.4rem;">
+        💬 Staff Actions & Signatures
+      </div>
+      <pre style="font-size:.8rem;white-space:pre-wrap;font-family:inherit;
+           color:var(--text-secondary);">{{ complaint.admin_remark }}</pre>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ─── Complaint Timeline ─────────────────────────────────────────── -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1.25rem;">📋 Complaint Journey</h3>
+<div style="position:relative;padding-left:2rem;">
+  <div style="position:absolute;left:.6rem;top:0;bottom:0;width:2px;
+       background:var(--border);"></div>
+
+  <!-- Step 1: Submitted -->
+  <div style="position:relative;margin-bottom:1.25rem;">
+    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+         background:var(--success);border:2px solid var(--bg-card);"></div>
+    <div style="font-weight:600;font-size:.875rem;">✅ Submitted</div>
+    <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.created_at|date:"d M Y, H:i" }}</div>
+    <div style="font-size:.78rem;color:var(--text-secondary);">Complaint submitted anonymously</div>
+  </div>
+
+  <!-- Step 2: Assigned to Department -->
+  <div style="position:relative;margin-bottom:1.25rem;">
+    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+         background:var(--info);border:2px solid var(--bg-card);"></div>
+    <div style="font-weight:600;font-size:.875rem;">👤 Assigned to Department</div>
+    <div style="font-size:.78rem;color:var(--text-secondary);">Being reviewed by department staff</div>
+  </div>
+
+ {% if complaint.escalation_level >= 2 %}
+  <div style="position:relative;margin-bottom:1.25rem;">
+    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+         background:var(--warning);border:2px solid var(--bg-card);"></div>
+    <div style="font-weight:600;font-size:.875rem;">🎓 Escalated to HOD</div>
+    {% if complaint.escalated_at %}
+    <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.escalated_at|date:"d M Y, H:i" }}</div>
+    {% endif %}
+    <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 24 hours — HOD notified</div>
+  </div>
+  {% endif %}
+
+  {% if complaint.escalation_level >= 3 %}
+  <div style="position:relative;margin-bottom:1.25rem;">
+    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+         background:var(--danger);border:2px solid var(--bg-card);"></div>
+    <div style="font-weight:600;font-size:.875rem;">🏛️ Escalated to Higher Authority</div>
+    <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 48 hours — Principal/Dean notified</div>
+  </div>
+  {% endif %}
+  
+      <div style="position:relative;margin-bottom:.5rem;">
+        <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+             background:{% if complaint.status == 'resolved' %}var(--success)
+                        {% elif complaint.status == 'rejected' %}var(--danger)
+                        {% elif complaint.status == 'withdrawn' %}var(--text-muted)
+                        {% else %}var(--border){% endif %};
+             border:2px solid var(--bg-card);"></div>
+        <div style="font-weight:600;font-size:.875rem;">
+          {% if complaint.status == 'resolved' %}✅ Resolved
+          {% elif complaint.status == 'rejected' %}❌ Rejected
+          {% elif complaint.status == 'withdrawn' %}↩️ Withdrawn
+          {% elif complaint.status == 'in_progress' %}🔄 In Progress
+          {% else %}⏳ Awaiting Response{% endif %}
+        </div>
+        <div style="font-size:.78rem;color:var(--text-muted);">
+          Last updated {{ complaint.updated_at|timesince }} ago
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Student Follow-up Updates ─────────────────────────────────── -->
+  {% if updates %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">📝 Student Updates</h3>
+    {% for update in updates %}
+    <div style="background:var(--bg-input);border-radius:8px;padding:.875rem 1rem;
+         margin-bottom:.75rem;">
+      <div style="font-size:.8rem;font-weight:600;color:var(--accent);margin-bottom:.3rem;">
+        Student Update — {{ update.created_at|date:"d M Y, H:i" }}
+      </div>
+      <p style="font-size:.875rem;color:var(--text-primary);">{{ update.content }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ─── Add Update (owner only) ────────────────────────────────────── -->
+  {% if is_owner and complaint.status not in 'resolved,rejected,withdrawn' %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h3 style="font-weight:700;font-size:.95rem;margin-bottom:.75rem;">
+      ➕ Add Follow-up Information
+    </h3>
+    <form method="post" action="{% url 'complaints:add_update' complaint.pk %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <textarea name="content" class="form-control" rows="3"
+          placeholder="Add more details, updates, or additional evidence about your complaint..."
+          maxlength="1000"></textarea>
+        <span class="form-help">This update will notify the handling staff.</span>
+      </div>
+      <button type="submit" class="btn btn-primary-solid">Submit Update</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- ─── Message Thread (Staff ↔ Student) ───────────────────────────── -->
+  {% if messages_thread %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1rem;">
+      💬 Messages from Staff
+    </h3>
+    {% for msg in messages_thread %}
+    <div style="display:flex;gap:.75rem;margin-bottom:1rem;
+         {% if msg.sender_type == 'student' %}flex-direction:row-reverse;{% endif %}">
+      <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;
+           display:flex;align-items:center;justify-content:center;font-size:.8rem;
+           background:{% if msg.sender_type == 'staff' %}var(--accent-light){% else %}var(--bg-input){% endif %};">
+        {% if msg.sender_type == 'staff' %}👤{% else %}🎓{% endif %}
+      </div>
+      <div style="max-width:75%;">
+        <div style="background:{% if msg.sender_type == 'staff' %}var(--accent-light){% else %}var(--bg-input){% endif %};
+             border-radius:{% if msg.sender_type == 'student' %}12px 2px 12px 12px{% else %}2px 12px 12px 12px{% endif %};
+             padding:.75rem 1rem;">
+          <p style="font-size:.875rem;margin:0;">{{ msg.message }}</p>
+        </div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.25rem;
+             {% if msg.sender_type == 'student' %}text-align:right;{% endif %}">
+          {% if msg.sender_type == 'staff' %}Staff{% else %}You{% endif %}
+          — {{ msg.created_at|timesince }} ago
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Student reply -->
+    {% if is_owner and complaint.status not in 'resolved,rejected,withdrawn' %}
+    <form method="post" action="{% url 'complaints:student_reply' complaint.pk %}"
+          style="margin-top:1rem;display:flex;gap:.5rem;">
+      {% csrf_token %}
+      <input type="text" name="message" class="form-control"
+             placeholder="Reply to staff..." required>
+      <button type="submit" class="btn btn-primary-solid" style="white-space:nowrap;">
+        Send
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ─── Owner Actions ──────────────────────────────────────────────── -->
+  {% if is_owner %}
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem;">
+    {% if complaint.status == 'pending' %}
+      <a href="{% url 'complaints:edit' complaint.pk %}" class="btn btn-secondary">
+        ✏️ Edit
+      </a>
+      <a href="{% url 'complaints:delete' complaint.pk %}" class="btn btn-secondary"
+         style="color:var(--danger);border-color:var(--danger);">
+        🗑️ Delete
+      </a>
+    {% endif %}
+    {% if complaint.status not in 'resolved,rejected,withdrawn' %}
+      <a href="{% url 'complaints:withdraw' complaint.pk %}" class="btn btn-secondary"
+         style="color:var(--text-muted);">
+        ↩️ Withdraw
+      </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

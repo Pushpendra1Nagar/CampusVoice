@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Edit Complaint{% endblock %}
+{% block content %}
+<div style="max-width:640px;margin:0 auto;">
+  <a href="{% url 'complaints:my_complaints' %}" style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;margin-bottom:1.5rem;display:inline-block;">← Back to My Complaints</a>
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">Edit Complaint</h1>
+  <div class="card">
+    <div style="background:var(--warning-bg);border-left:3px solid var(--warning);border-radius:4px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.85rem;color:var(--warning);">
+      ⚠️ You can only edit complaints that are still <strong>Pending</strong>.
+    </div>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" name="title" value="{{ complaint.title }}" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select name="category" class="form-control" required>
+          <option value="hostel" {% if complaint.category == 'hostel' %}selected{% endif %}>🏠 Hostel</option>
+          <option value="academics" {% if complaint.category == 'academics' %}selected{% endif %}>📚 Academics</option>
+          <option value="infrastructure" {% if complaint.category == 'infrastructure' %}selected{% endif %}>🏗️ Infrastructure</option>
+          <option value="library" {% if complaint.category == 'library' %}selected{% endif %}>📖 Library</option>
+          <option value="canteen" {% if complaint.category == 'canteen' %}selected{% endif %}>🍽️ Canteen</option>
+          <option value="sports" {% if complaint.category == 'sports' %}selected{% endif %}>⚽ Sports</option>
+          <option value="harassment" {% if complaint.category == 'harassment' %}selected{% endif %}>🚨 Ragging</option>
+          <option value="other" {% if complaint.category == 'other' %}selected{% endif %}>📋 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea name="description" class="form-control" rows="6" required>{{ complaint.description }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Update Image (optional)</label>
+        <input type="file" name="image" class="form-control" accept="image/*">
+      </div>
+      <div style="display:flex;gap:1rem;">
+        <button type="submit" class="btn btn-primary-solid">Save Changes</button>
+        <a href="{% url 'complaints:my_complaints' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+
+{% block messages %}{% endblock %}
+{% block errors %}{% endblock %}
+{% block notifications %}{% endblock %}
+
+{% block content %}
+<style>
+  .messages, .alert, .errorlist,
+  ul.messages, ul.errorlist,
+  .message-container, .notification-container,
+  .django-messages {
+    display: none !important;
+  }
+
+  /* ---------- container ---------- */
+  .register-container {
+    max-width: 660px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 1rem 2rem;
+    margin-top: 0.5rem;
+  }
+
+  .register-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 1rem;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .06);
+  }
+
+  .register-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 .2rem;
+    color: var(--text-primary, #1a202c);
+  }
+
+  .register-subtitle {
+    font-size: .9rem;
+    color: var(--text-secondary, #64748b);
+    margin: 0 0 1.5rem;
+  }
+
+  /* ---------- grid ---------- */
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1.25rem;
+  }
+
+  /* ---------- form fields ---------- */
+  .fg {
+    margin-bottom: 1.1rem;
+  }
+
+  .fl {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    margin-bottom: .35rem;
+    color: var(--text-primary, #1a202c);
+  }
+
+  .fc {
+    width: 100%;
+    padding: .5rem .75rem;
+    font-size: .875rem;
+    border: 1px solid var(--border, #cbd5e1);
+    border-radius: .45rem;
+    background: var(--input-bg, #f8fafc);
+    color: var(--text-primary, #1a202c);
+    transition: border-color .2s, box-shadow .2s;
+    box-sizing: border-box;
+  }
+
+  .fc:focus {
+    outline: none;
+    border-color: var(--accent, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+  }
+
+  .fhelp {
+    font-size: .72rem;
+    color: var(--text-secondary, #94a3b8);
+    margin-top: .25rem;
+    display: block;
+  }
+
+  /* ---------- divider ---------- */
+  .form-divider {
+    border: none;
+    border-top: 1px solid var(--border, #e9ecef);
+    margin: .35rem 0 1.1rem;
+  }
+
+  /* ---------- submit button ---------- */
+  .btn-submit {
+    width: 100%;
+    padding: .65rem 1.25rem;
+    font-size: .95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: .5rem;
+    cursor: pointer;
+    background: var(--accent, #6366f1);
+    color: #fff;
+    margin-top: .5rem;
+    transition: background .2s, transform .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    min-height: 44px;
+  }
+
+  .btn-submit:hover:not(:disabled) {
+    background: var(--accent-hover, #4f46e5);
+    transform: translateY(-1px);
+  }
+
+  .btn-submit:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+  }
+
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, .3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .55s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- bottom-right toasts ---------- */
+  .toast-box {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: .5rem;
+    max-width: 370px;
+    pointer-events: none;
+  }
+
+  .toast-box > * { pointer-events: auto; }
+
+  .toast-item {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+    padding: .7rem .9rem;
+    border-radius: .45rem;
+    font-size: .82rem;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    animation: toastIn .35s ease-out;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .toast-item svg { flex-shrink: 0; margin-top: 1px; }
+
+  .toast-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #b91c1c;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 0 0 .4rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  @keyframes toastIn {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  .toast-item.hiding {
+    animation: toastOut .3s ease-in forwards;
+  }
+
+  @keyframes toastOut {
+    to { transform: translateX(120%); opacity: 0; }
+  }
+
+  /* ---------- footer ---------- */
+  .auth-footer {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: .85rem;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .auth-footer a {
+    color: var(--accent, #6366f1);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .auth-footer a:hover { text-decoration: underline; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 640px) {
+    .register-card { padding: 1.5rem 1.15rem; }
+    .row-2 { grid-template-columns: 1fr; }
+    .toast-box { left: 1rem; right: 1rem; max-width: none; }
+  }
+</style>
+
+<!-- ==================== FORM ==================== -->
+<div class="register-container">
+  <div class="register-card">
+    <h1 class="register-title">Create your account</h1>
+    <p class="register-subtitle">Join CampusVoice — it only takes a minute</p>
+
+    <form method="post" novalidate id="regForm">
+      {% csrf_token %}
+
+      <div class="row-2">
+        <div class="fg">
+          <label class="fl">First Name *</label>
+          <input type="text" name="first_name" class="fc"
+                 placeholder="First name"
+                 value="{{ form.first_name.value|default:'' }}" required>
+        </div>
+        <div class="fg">
+          <label class="fl">Last Name *</label>
+          <input type="text" name="last_name" class="fc"
+                 placeholder="Last name"
+                 value="{{ form.last_name.value|default:'' }}" required>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="fg">
+          <label class="fl">Email *</label>
+          <input type="email" name="email" class="fc"
+                 placeholder="you@example.com"
+                 value="{{ form.email.value|default:'' }}" required>
+          <span class="fhelp">An OTP will be sent to verify your email.</span>
+        </div>
+        <div class="fg">
+          <label class="fl">Username *</label>
+          <input type="text" name="username" class="fc"
+                 placeholder="Choose a username"
+                 value="{{ form.username.value|default:'' }}" required>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="row-2">
+        <div class="fg">
+          <label class="fl">Enrollment Number *</label>
+          <input type="text" name="roll_number" class="fc"
+                 placeholder="XX0000000000"
+                 pattern="[A-Z]{2}[0-9]{10}"
+                 title="Must be 2 capital letters followed by 10 digits"
+                 maxlength="12" minlength="12"
+                 oninput="this.value = this.value.toUpperCase()"
+                 value="{{ form.roll_number.value|default:'' }}" required>
+          <span class="fhelp">2 letters + 10 digits (e.g. XX0000000000)</span>
+        </div>
+        <div class="fg">
+          <label class="fl">Department</label>
+          <input type="text" name="department" class="fc"
+                 placeholder="e.g. Computer Science"
+                 value="{{ form.department.value|default:'' }}">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="fg">
+          <label class="fl">Year of Study *</label>
+          <select name="year_of_study" class="fc" required>
+            <option value="">— Select Year —</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Degree Program *</label>
+          <select name="degree" class="fc" required>
+            <option value="">— Select Degree —</option>
+            <option value="bachelor">Bachelors</option>
+            <option value="master">Masters</option>
+            <option value="phd">PhD / Research</option>
+            <option value="diploma">Diploma</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+
+      <div class="row-2">
+        <div class="fg">
+          <label class="fl">Password *</label>
+          <input type="password" name="password1" class="fc"
+                 placeholder="Create a password" required>
+        </div>
+        <div class="fg">
+          <label class="fl">Confirm Password *</label>
+          <input type="password" name="password2" class="fc"
+                 placeholder="Re-enter password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span id="btnLabel">Send OTP &amp; Continue →</span>
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Already registered?&nbsp;<a href="{% url 'users:login' %}">Login</a>
+    </p>
+  </div>
+</div>
+
+<!-- ==================== TOASTS ==================== -->
+<div class="toast-box" id="toastBox">
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="toast-item" data-auto>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="#ef4444"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/></svg>
+        <span>{{ msg }}</span>
+        <button class="toast-close" onclick="hideToast(this)">&times;</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if form and form.errors %}
+    {% for field, errors in form.errors.items %}
+      {% for error in errors %}
+        <div class="toast-item" data-auto>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="#ef4444"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/></svg>
+          <span><strong>{{ field|title }}:</strong> {{ error }}</span>
+          <button class="toast-close" onclick="hideToast(this)">&times;</button>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+<!-- ==================== JS ==================== -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    /* kill any stray error elements from base.html */
+    ['.messages','ul.messages','.errorlist','ul.errorlist',
+     '.alert','.alert-danger','.alert-error',
+     '.message-container','.django-messages','.notification-container'
+    ].forEach(function (s) {
+      document.querySelectorAll(s).forEach(function (el) {
+        if (!el.closest('.toast-box')) el.remove();
+      });
+    });
+
+    /* --- sanitise toast text: strip real enrollment examples --- */
+    document.querySelectorAll('.toast-item span').forEach(function (span) {
+      // Replace any 2-letter+10-digit pattern with masked version
+      span.textContent = span.textContent.replace(
+        /\b[A-Z]{2}\d{10}\b/g, 'XX0000000000'
+      );
+    });
+  });
+
+  /* button loading state */
+  var form = document.getElementById('regForm');
+  var btn  = document.getElementById('submitBtn');
+  var lbl  = document.getElementById('btnLabel');
+
+  form.addEventListener('submit', function () {
+    btn.disabled = true;
+    lbl.innerHTML = '<span class="btn-spinner"></span> Please wait a moment…';
+  });
+
+  /* toast dismiss */
+  function hideToast(el) {
+    var t = el.closest('.toast-item');
+    t.classList.add('hiding');
+    t.addEventListener('animationend', function () { t.remove(); });
+  }
+
+  /* auto-dismiss after 7s */
+  document.querySelectorAll('.toast-item[data-auto]').forEach(function (t) {
+    setTimeout(function () {
+      if (t.parentNode) {
+        t.classList.add('hiding');
+        t.addEventListener('animationend', function () { t.remove(); });
+      }
+    }, 7000);
+  });
+</script>
+{% endblock %}

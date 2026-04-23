@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div style="max-width:640px; margin:0 auto;">
+  <h1 style="font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:1.5rem;">My Profile</h1>
+
+  <!-- Stats row -->
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem;">
+    <div class="card" style="text-align:center; padding:1rem;">
+      <div style="font-size:1.75rem; font-weight:700; color:var(--accent);">{{ complaint_count }}</div>
+      <div style="font-size:0.8rem; color:var(--text-secondary);">Total Complaints</div>
+    </div>
+    <div class="card" style="text-align:center; padding:1rem;">
+      <div style="font-size:1.75rem; font-weight:700; color:var(--success);">{{ resolved_count }}</div>
+      <div style="font-size:0.8rem; color:var(--text-secondary);">Resolved</div>
+    </div>
+    <div class="card" style="text-align:center; padding:1rem;">
+      <div style="font-size:1.75rem; font-weight:700; color:var(--text-secondary);">{{ complaint_count|add:"-"|add:resolved_count }}</div>
+      <div style="font-size:0.8rem; color:var(--text-secondary);">Pending</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <input type="text" name="department" value="{{ user.department }}" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year of Study</label>
+        <input type="number" name="year_of_study" value="{{ user.year_of_study|default:'' }}" min="1" max="5" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Profile Picture</label>
+        <input type="file" name="profile_picture" class="form-control" accept="image/*">
+      </div>
+      <button type="submit" class="btn btn-primary-solid">Save Changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

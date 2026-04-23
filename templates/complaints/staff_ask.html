@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Ask Student{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:0 auto;">
+  <a href="{% url 'complaints:staff_dashboard' %}"
+     style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;
+            margin-bottom:1.5rem;display:inline-block;">← Back to Dashboard</a>
+
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem;
+      font-weight:700;margin-bottom:1.5rem;">Ask Student for More Information</h1>
+
+  <div class="card" style="margin-bottom:1rem;">
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem;">
+      Complaint #{{ complaint.id }}
+    </div>
+    <div style="font-weight:600;">{{ complaint.category_icon }} {{ complaint.title }}</div>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-top:.5rem;">
+      {{ complaint.description|truncatechars:150 }}
+    </p>
+  </div>
+
+  <div class="card">
+    <p style="color:var(--text-secondary);font-size:.875rem;margin-bottom:1.25rem;">
+      Your question will be sent to the student via email and shown in their complaint page.
+      The student's identity remains anonymous to the public.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Your Question *</label>
+        <textarea name="message" class="form-control" rows="4"
+          placeholder="e.g. Could you please provide the exact room number and which block you are in?"
+          required></textarea>
+      </div>
+      <div style="display:flex;gap:1rem;">
+        <button type="submit" class="btn btn-primary-solid">Send Question to Student</button>
+        <a href="{% url 'complaints:staff_dashboard' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

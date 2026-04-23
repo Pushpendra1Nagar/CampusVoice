@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+
+  <!-- ─── Header ─────────────────────────────────────────────────────── -->
+  <div style="display:flex;justify-content:space-between;align-items:center;
+       margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;">
+        ⚙️ Admin Dashboard
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;">
+        Full complaint view — student identities visible only here
+      </p>
+    </div>
+
+    <!-- ─── Action Buttons ──────────────────────────────────────────── -->
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;">
+      <a href="{% url 'complaints:analytics' %}" class="btn btn-secondary">
+        📊 Analytics
+      </a>
+      <a href="{% url 'complaints:export_pdf' %}" class="btn btn-secondary">
+        📄 Export PDF
+      </a>
+      <a href="{% url 'users:create_staff' %}" class="btn btn-primary-solid">
+        + Create Staff
+      </a>
+      <a href="{% url 'complaints:feed' %}" class="btn btn-secondary">
+        ← Public Feed
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── Stats ──────────────────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--text-primary);">{{ total }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Total</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--warning);">{{ pending }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Pending</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--info);">{{ in_progress }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">In Progress</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--success);">{{ resolved }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Resolved</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1rem;">
+      <div style="font-size:1.75rem;font-weight:700;color:var(--danger);">{{ rejected }}</div>
+      <div style="font-size:.75rem;color:var(--text-muted);">Rejected</div>
+    </div>
+  </div>
+
+  <!-- ─── Filters ────────────────────────────────────────────────────── -->
+  <div class="card" style="padding:1rem;margin-bottom:1.5rem;">
+    <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;">
+      <input type="text"
+             name="q"
+             value="{{ search_query }}"
+             class="form-control"
+             placeholder="🔍 Search by title, name, email..."
+             style="flex:1;min-width:200px;">
+
+      <select name="status" class="form-control" style="width:160px;">
+        <option value="">All Statuses</option>
+        {% for val,label in statuses %}
+          <option value="{{ val }}" {% if active_status == val %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <select name="category" class="form-control" style="width:160px;">
+        <option value="">All Categories</option>
+        {% for val,label in categories %}
+          <option value="{{ val }}" {% if active_category == val %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn btn-primary-solid">Filter</button>
+      <a href="{% url 'complaints:admin_dashboard' %}" class="btn btn-secondary">Reset</a>
+    </form>
+  </div>
+
+  <!-- ─── Complaints Table ────────────────────────────────────────────── -->
+  {% if complaints %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">#</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Complaint</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Student</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Category</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Status</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Level</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Upvotes</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Date</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr style="border-bottom:1px solid var(--border);
+             transition:background .15s ease;"
+            onmouseover="this.style.background='var(--bg-input)'"
+            onmouseout="this.style.background=''">
+
+          <td style="padding:.75rem 1rem;color:var(--text-muted);">
+            {{ complaint.id }}
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:600;color:var(--text-primary);">
+              {{ complaint.category_icon }} {{ complaint.title|truncatechars:40 }}
+            </div>
+            <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem;">
+              {{ complaint.description|truncatechars:60 }}
+            </div>
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:500;">
+              {{ complaint.created_by.get_full_name }}
+            </div>
+            <div style="font-size:.75rem;color:var(--text-muted);">
+              {{ complaint.created_by.email }}
+            </div>
+            {% if complaint.created_by.roll_number %}
+            <div style="font-size:.72rem;color:var(--accent);">
+              {{ complaint.created_by.roll_number }}
+            </div>
+            {% endif %}
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <span class="badge {{ complaint.status_badge_class }}">
+              {{ complaint.get_status_display }}
+            </span>
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <span class="badge {{ complaint.escalation_badge_class }}">
+              {{ complaint.escalation_level_label }}
+            </span>
+          </td>
+
+          <td style="padding:.75rem 1rem;color:var(--text-secondary);">
+            ▲ {{ complaint.upvote_count }}
+          </td>
+
+          <td style="padding:.75rem 1rem;color:var(--text-muted);font-size:.8rem;">
+            {{ complaint.created_at|date:"d M Y" }}
+          </td>
+
+          <td style="padding:.75rem 1rem;">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+              <a href="{% url 'complaints:detail' complaint.pk %}"
+                 class="btn btn-secondary"
+                 style="padding:.3rem .75rem;font-size:.8rem;">
+                View
+              </a>
+              <a href="{% url 'complaints:admin_update' complaint.pk %}"
+                 class="btn btn-primary-solid"
+                 style="padding:.3rem .75rem;font-size:.8rem;">
+                Update
+              </a>
+            </div>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">No complaints found</div>
+      <p class="empty-state-text">Try adjusting your filters or search query.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

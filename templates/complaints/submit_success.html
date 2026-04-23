@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Complaint Submitted{% endblock %}
+{% block content %}
+<div style="max-width:560px;margin:3rem auto;text-align:center;">
+  <div class="card" style="padding:2.5rem;">
+
+    <div style="font-size:4rem;margin-bottom:1rem;">✅</div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;
+        font-weight:700;margin-bottom:.5rem;">Complaint Submitted!</h1>
+
+    <div style="background:var(--accent-light);border-radius:8px;padding:.875rem 1.25rem;
+         margin:1.25rem 0;display:inline-block;">
+      <span style="color:var(--text-secondary);font-size:.875rem;">Complaint ID: </span>
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;
+            font-weight:700;color:var(--accent);">#{{ complaint.id }}</span>
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:1.5rem;">
+      Your complaint has been posted anonymously. Save your complaint ID to track progress.
+    </p>
+
+    <!-- What happens next -->
+    <div style="text-align:left;background:var(--bg-input);border-radius:var(--radius);
+         padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:.875rem;color:var(--text-secondary);
+           text-transform:uppercase;letter-spacing:.05em;">What happens next</div>
+
+      <div style="display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start;">
+        <div style="background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;
+             display:flex;align-items:center;justify-content:center;font-size:.75rem;
+             font-weight:700;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-weight:600;font-size:.875rem;">Department Review</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">
+            Department staff review within 24 hours
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-bottom:.75rem;align-items:flex-start;">
+        <div style="background:var(--warning);color:#fff;border-radius:50%;width:24px;height:24px;
+             display:flex;align-items:center;justify-content:center;font-size:.75rem;
+             font-weight:700;flex-shrink:0;">2</div>
+        <div>
+          <div style="font-weight:600;font-size:.875rem;">Auto-Escalation</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">
+            If not resolved, escalates to HOD at 24h, then Higher Authority at 48h
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;align-items:flex-start;">
+        <div style="background:var(--success);color:#fff;border-radius:50%;width:24px;height:24px;
+             display:flex;align-items:center;justify-content:center;font-size:.75rem;
+             font-weight:700;flex-shrink:0;">3</div>
+        <div>
+          <div style="font-weight:600;font-size:.875rem;">Email Notification</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">
+            You will receive an email when status changes
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.875rem;flex-wrap:wrap;justify-content:center;">
+      <a href="{% url 'complaints:my_complaints' %}" class="btn btn-primary-solid">
+        View My Complaints
+      </a>
+      <a href="{% url 'complaints:feed' %}" class="btn btn-secondary">
+        Back to Feed
+      </a>
+      <a href="{% url 'complaints:submit' %}" class="btn btn-secondary">
+        Submit Another
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

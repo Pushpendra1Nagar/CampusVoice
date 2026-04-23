@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Update Complaint{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:0 auto;">
+  <a href="{% url 'complaints:staff_dashboard' %}" style="color:var(--text-secondary);font-size:.875rem;text-decoration:none;margin-bottom:1.5rem;display:inline-block;">← Back to Dashboard</a>
+
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">Update Complaint</h1>
+
+  <!-- Complaint Info -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
+      <span class="badge badge-accent">{{ complaint.get_category_display }}</span>
+      <span class="badge {{ complaint.status_badge_class }}">{{ complaint.get_status_display }}</span>
+      <span class="badge {{ complaint.escalation_badge_class }}">{{ complaint.escalation_level_label }}</span>
+    </div>
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem;">{{ complaint.category_icon }} {{ complaint.title }}</h2>
+    <p style="color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin-bottom:1rem;">{{ complaint.description }}</p>
+    {% if complaint.image %}
+      <img src="{{ complaint.image.url }}" alt="Evidence" style="max-width:100%;border-radius:8px;margin-bottom:1rem;">
+    {% endif %}
+    <div style="font-size:.8rem;color:var(--text-muted);padding-top:.75rem;border-top:1px solid var(--border);">
+      <strong>Student:</strong> {{ complaint.created_by.get_full_name }} ({{ complaint.created_by.email }})
+      • {{ complaint.created_by.department }}
+      • Submitted: {{ complaint.created_at|date:"d M Y, H:i" }}
+    </div>
+
+    <!-- Escalation Timeline -->
+    {% if complaint.escalation_note %}
+    <div style="margin-top:1rem;background:var(--bg-input);border-radius:8px;padding:.875rem 1rem;">
+      <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);margin-bottom:.4rem;">📋 ESCALATION HISTORY</div>
+      <pre style="font-size:.78rem;color:var(--text-secondary);white-space:pre-wrap;font-family:inherit;">{{ complaint.escalation_note }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- Previous remarks/signatures -->
+    {% if complaint.admin_remark %}
+    <div style="margin-top:.75rem;background:var(--info-bg);border-left:3px solid var(--info);border-radius:4px;padding:.875rem 1rem;">
+      <div style="font-size:.75rem;font-weight:700;color:var(--info);margin-bottom:.4rem;">💬 PREVIOUS ACTIONS & SIGNATURES</div>
+      <pre style="font-size:.8rem;white-space:pre-wrap;font-family:inherit;color:var(--text-secondary);">{{ complaint.admin_remark }}</pre>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Update Form with Digital Signature -->
+  <div class="card">
+    <h3 style="font-weight:700;margin-bottom:.25rem;">Update Status</h3>
+    <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:1.25rem;">
+      Your digital signature will be permanently recorded with this action.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">New Status *</label>
+        <select name="status" class="form-control" required>
+          {% for val,label in statuses %}
+            <option value="{{ val }}" {% if complaint.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Remark / Action Taken</label>
+        <textarea name="admin_remark" class="form-control" rows="3"
+          placeholder="Describe what action was taken or why this decision was made..."></textarea>
+      </div>
+
+      <!-- Digital Signature Box -->
+      <div class="form-group" style="background:var(--warning-bg);border:1.5px solid var(--warning);border-radius:var(--radius-sm);padding:1rem;">
+        <label class="form-label" style="color:var(--warning);">✍️ Digital Signature *</label>
+        <input type="text" name="digital_signature" class="form-control"
+               placeholder="Type your full name as your digital signature"
+               required style="font-style:italic;font-size:1rem;">
+        <span class="form-help" style="color:var(--warning);">
+          By typing your name, you digitally sign this action. This will be permanently recorded with date & time.
+        </span>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-top:1rem;">
+        <button type="submit" class="btn btn-primary-solid">
+          ✅ Submit with Digital Signature
+        </button>
+        <a href="{% url 'complaints:staff_dashboard' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

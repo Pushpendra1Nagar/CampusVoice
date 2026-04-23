@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Manage Staff{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+        👥 Manage Staff Accounts
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;margin-top:.25rem;">
+        Deactivate blocks login but keeps history. Delete is permanent.
+      </p>
+    </div>
+    <a href="{% url 'users:create_staff' %}" class="btn btn-primary-solid">+ Create Staff</a>
+  </div>
+
+  {% if staff_users %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Staff Member</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Role</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Department</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Status</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Joined</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;color:var(--text-secondary);">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for staff in staff_users %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:600;">{{ staff.get_full_name }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">{{ staff.email }}</div>
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <span class="badge badge-accent">{{ staff.get_role_display }}</span>
+          </td>
+          <td style="padding:.75rem 1rem;color:var(--text-secondary);">
+            {{ staff.department|default:"—" }}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            {% if staff.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+          </td>
+          <td style="padding:.75rem 1rem;color:var(--text-muted);font-size:.8rem;">
+            {{ staff.date_joined|date:"d M Y" }}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <div style="display:flex;gap:.5rem;">
+              <!-- Deactivate / Reactivate -->
+              <form method="post" action="{% url 'users:deactivate_staff' staff.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary"
+                        style="font-size:.78rem;padding:.28rem .65rem;"
+                        onclick="return confirm('{% if staff.is_active %}Deactivate{% else %}Reactivate{% endif %} {{ staff.get_full_name }}?')">
+                  {% if staff.is_active %}⏸ Deactivate{% else %}▶ Reactivate{% endif %}
+                </button>
+              </form>
+              <!-- Delete -->
+              {% if staff != request.user %}
+              <a href="{% url 'users:delete_staff' staff.pk %}"
+                 class="btn btn-secondary"
+                 style="font-size:.78rem;padding:.28rem .65rem;color:var(--danger);border-color:var(--danger);">
+                🗑 Delete
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <div class="empty-state-title">No staff accounts yet</div>
+      <p class="empty-state-text">Create accounts for Department Users, HODs, and Higher Authority.</p>
+      <a href="{% url 'users:create_staff' %}" class="btn btn-primary-solid" style="margin-top:1rem;">
+        Create First Staff Account
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
