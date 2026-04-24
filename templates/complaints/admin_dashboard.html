@@ -23,6 +23,15 @@
       <a href="{% url 'complaints:export_pdf' %}" class="btn btn-secondary">
         📄 Export PDF
       </a>
+      <a href="{% url 'complaints:audit_log' %}" class="btn btn-secondary">
+        📋 Audit Log
+      </a>
+      <a href="{% url 'complaints:staff_performance' %}" class="btn btn-secondary">
+        📈 Performance
+      </a>
+      <a href="{% url 'complaints:search_student' %}" class="btn btn-secondary">
+        🔍 Find Student
+      </a>
       <a href="{% url 'users:create_staff' %}" class="btn btn-primary-solid">
         + Create Staff
       </a>
@@ -89,12 +98,46 @@
     </form>
   </div>
 
-  <!-- ─── Complaints Table ────────────────────────────────────────────── -->
   {% if complaints %}
+
+  <!-- ─── Bulk Action Bar ─────────────────────────────────────────────── -->
+  <div id="bulkBar"
+       style="display:none;background:var(--accent-light);
+              border:1.5px solid var(--accent);border-radius:8px;
+              padding:.75rem 1rem;margin-bottom:1rem;
+              align-items:center;gap:1rem;flex-wrap:wrap;">
+    <span id="selectedCount"
+          style="font-weight:600;color:var(--accent);font-size:.875rem;">
+      0 selected
+    </span>
+    <select id="bulkStatusSelect" class="form-control" style="width:160px;">
+      {% for val,label in statuses %}
+        <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button onclick="applyBulkUpdate()"
+            class="btn btn-primary-solid"
+            style="font-size:.875rem;padding:.4rem .875rem;">
+      Apply to Selected
+    </button>
+    <button onclick="clearSelection()"
+            class="btn btn-secondary"
+            style="font-size:.875rem;padding:.4rem .875rem;">
+      Clear
+    </button>
+  </div>
+
+  <!-- ─── Complaints Table ────────────────────────────────────────────── -->
   <div class="card" style="padding:0;overflow:hidden;">
     <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
       <thead>
         <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+
+          <!-- ✅ Checkbox column -->
+          <th style="padding:.875rem 1rem;width:40px;">
+            <input type="checkbox" id="selectAll" title="Select all">
+          </th>
+
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
                color:var(--text-secondary);">#</th>
           <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
@@ -117,10 +160,16 @@
       </thead>
       <tbody>
         {% for complaint in complaints %}
-        <tr style="border-bottom:1px solid var(--border);
-             transition:background .15s ease;"
+        <tr style="border-bottom:1px solid var(--border);transition:background .15s ease;"
             onmouseover="this.style.background='var(--bg-input)'"
             onmouseout="this.style.background=''">
+
+          <!-- ✅ Checkbox cell -->
+          <td style="padding:.75rem 1rem;">
+            <input type="checkbox"
+                   class="complaint-checkbox"
+                   value="{{ complaint.id }}">
+          </td>
 
           <td style="padding:.75rem 1rem;color:var(--text-muted);">
             {{ complaint.id }}
@@ -173,18 +222,34 @@
             {{ complaint.created_at|date:"d M Y" }}
           </td>
 
+          <!-- ✅ Updated Action cell with quick status dropdown -->
           <td style="padding:.75rem 1rem;">
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+
+              <!-- Quick inline status dropdown -->
+              <select class="form-control quick-status"
+                      data-id="{{ complaint.pk }}"
+                      style="font-size:.78rem;padding:.25rem .5rem;width:120px;">
+                {% for val,label in statuses %}
+                  <option value="{{ val }}"
+                    {% if complaint.status == val %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                {% endfor %}
+              </select>
+
               <a href="{% url 'complaints:detail' complaint.pk %}"
                  class="btn btn-secondary"
-                 style="padding:.3rem .75rem;font-size:.8rem;">
+                 style="padding:.3rem .65rem;font-size:.78rem;white-space:nowrap;">
                 View
               </a>
+
               <a href="{% url 'complaints:admin_update' complaint.pk %}"
                  class="btn btn-primary-solid"
-                 style="padding:.3rem .75rem;font-size:.8rem;">
-                Update
+                 style="padding:.3rem .65rem;font-size:.78rem;white-space:nowrap;">
+                Details
               </a>
+
             </div>
           </td>
 
@@ -203,4 +268,141 @@
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+/* ═══════════════════════════════════════════════
+   SELECT ALL CHECKBOX
+═══════════════════════════════════════════════ */
+const selectAllCb = document.getElementById('selectAll');
+if (selectAllCb) {
+  selectAllCb.addEventListener('change', function () {
+    document.querySelectorAll('.complaint-checkbox').forEach(cb => {
+      cb.checked = this.checked;
+    });
+    updateBulkBar();
+  });
+}
+
+document.querySelectorAll('.complaint-checkbox').forEach(cb => {
+  cb.addEventListener('change', updateBulkBar);
+});
+
+/* ═══════════════════════════════════════════════
+   BULK BAR VISIBILITY
+═══════════════════════════════════════════════ */
+function updateBulkBar() {
+  const selected = document.querySelectorAll('.complaint-checkbox:checked');
+  const bar      = document.getElementById('bulkBar');
+  const countEl  = document.getElementById('selectedCount');
+
+  if (!bar) return;
+
+  if (selected.length > 0) {
+    bar.style.display = 'flex';
+    countEl.textContent = selected.length + ' selected';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CLEAR SELECTION
+═══════════════════════════════════════════════ */
+function clearSelection() {
+  document.querySelectorAll('.complaint-checkbox').forEach(cb => {
+    cb.checked = false;
+  });
+  if (selectAllCb) selectAllCb.checked = false;
+  updateBulkBar();
+}
+
+/* ═══════════════════════════════════════════════
+   BULK STATUS UPDATE
+═══════════════════════════════════════════════ */
+async function applyBulkUpdate() {
+  const ids = [...document.querySelectorAll('.complaint-checkbox:checked')]
+              .map(cb => parseInt(cb.value));
+  const status = document.getElementById('bulkStatusSelect').value;
+
+  if (!ids.length) {
+    alert('Please select at least one complaint.');
+    return;
+  }
+
+  if (!confirm(`Update ${ids.length} complaint(s) to "${status}"?`)) return;
+
+  try {
+    const res = await fetch('{% url "complaints:bulk_update" %}', {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken':  csrfToken,
+      },
+      body: JSON.stringify({ ids, status }),
+    });
+
+    const data = await res.json();
+
+    if (data.status === 'ok') {
+      alert(`✅ ${data.updated} complaint(s) updated.`);
+      location.reload();
+    } else {
+      alert('Error: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+    console.error(err);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   QUICK INLINE STATUS UPDATE
+═══════════════════════════════════════════════ */
+document.querySelectorAll('.quick-status').forEach(select => {
+  /* Store original value so we can revert on failure */
+  select.dataset.original = select.value;
+
+  select.addEventListener('change', async function () {
+    const id          = this.dataset.id;
+    const newStatus   = this.value;
+    const originalVal = this.dataset.original;
+
+    try {
+      const res = await fetch(`/admin-panel/${id}/quick-update/`, {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken':  csrfToken,
+        },
+        body: `status=${encodeURIComponent(newStatus)}`,
+      });
+
+      const data = await res.json();
+
+      if (data.status === 'ok') {
+        /* ✅ Green flash feedback */
+        this.style.transition  = 'background 0.3s ease';
+        this.style.background  = 'var(--success-bg, #d1fae5)';
+        this.style.borderColor = 'var(--success, #10b981)';
+        this.dataset.original  = newStatus;
+        setTimeout(() => {
+          this.style.background  = '';
+          this.style.borderColor = '';
+        }, 1500);
+      } else {
+        alert('Update failed: ' + (data.error || 'Unknown error'));
+        this.value = originalVal;
+      }
+    } catch (err) {
+      alert('Network error. Please try again.');
+      this.value = originalVal;
+      console.error(err);
+    }
+  });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Staff Performance{% endblock %}
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;
+       margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+        📈 Staff Performance
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;margin-top:.25rem;">
+        Based on complaints handled in each staff member's department and level
+      </p>
+    </div>
+    <a href="{% url 'complaints:admin_dashboard' %}" class="btn btn-secondary">← Dashboard</a>
+  </div>
+
+  {% if performance %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Staff Member</th>
+          <th style="padding:.875rem 1rem;text-align:center;font-weight:600;
+               color:var(--text-secondary);">Role</th>
+          <th style="padding:.875rem 1rem;text-align:center;font-weight:600;
+               color:var(--text-secondary);">Total</th>
+          <th style="padding:.875rem 1rem;text-align:center;font-weight:600;
+               color:var(--text-secondary);">Resolved</th>
+          <th style="padding:.875rem 1rem;text-align:center;font-weight:600;
+               color:var(--text-secondary);">Escalated</th>
+          <th style="padding:.875rem 1rem;text-align:center;font-weight:600;
+               color:var(--text-secondary);">Avg Time</th>
+          <th style="padding:.875rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Resolution Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in performance %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:600;">{{ row.staff.get_full_name }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">
+              {{ row.staff.department|default:"—" }}
+            </div>
+          </td>
+          <td style="padding:.75rem 1rem;text-align:center;">
+            <span class="badge badge-accent">{{ row.staff.get_role_display }}</span>
+          </td>
+          <td style="padding:.75rem 1rem;text-align:center;font-weight:600;">
+            {{ row.total }}
+          </td>
+          <td style="padding:.75rem 1rem;text-align:center;color:var(--success);
+               font-weight:600;">{{ row.resolved }}</td>
+          <td style="padding:.75rem 1rem;text-align:center;color:var(--danger);">
+            {{ row.escalated }}
+          </td>
+          <td style="padding:.75rem 1rem;text-align:center;font-size:.875rem;
+               color:{% if row.avg_hours <= 24 %}var(--success){% elif row.avg_hours <= 48 %}var(--warning){% else %}var(--danger){% endif %};">
+            {% if row.avg_hours %}{{ row.avg_hours }}h{% else %}—{% endif %}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="flex:1;height:8px;background:var(--border);
+                   border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:{{ row.rate }}%;border-radius:4px;
+                     background:{% if row.rate >= 75 %}var(--success){% elif row.rate >= 40 %}var(--warning){% else %}var(--danger){% endif %};
+                     transition:width .3s;"></div>
+              </div>
+              <span style="font-weight:700;min-width:40px;
+                    color:{% if row.rate >= 75 %}var(--success){% elif row.rate >= 40 %}var(--warning){% else %}var(--danger){% endif %};">
+                {{ row.rate }}%
+              </span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <div class="empty-state-title">No staff data yet</div>
+      <p class="empty-state-text">Create staff accounts and handle complaints to see performance data.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

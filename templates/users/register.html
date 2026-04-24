@@ -1,26 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}Register{% endblock %}
 
-{% block messages %}{% endblock %}
-{% block errors %}{% endblock %}
-{% block notifications %}{% endblock %}
-
 {% block content %}
 <style>
-  .messages, .alert, .errorlist,
-  ul.messages, ul.errorlist,
-  .message-container, .notification-container,
-  .django-messages {
-    display: none !important;
-  }
-
   /* ---------- container ---------- */
   .register-container {
     max-width: 660px;
     width: 100%;
     margin: 0 auto;
     padding: 1rem 1rem 2rem;
-    margin-top: 0.5rem;
+    margin-top: 0;
   }
 
   .register-card {
@@ -29,6 +18,72 @@
     border-radius: 1rem;
     padding: 2rem 2.25rem;
     box-shadow: 0 4px 24px rgba(0, 0, 0, .06);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* ===== DARK MODE OVERRIDES ===== */
+  [data-theme="dark"] .register-card {
+    background: var(--card-bg, #1e293b);
+    border-color: var(--border, rgba(255, 255, 255, 0.06));
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .25);
+  }
+
+  [data-theme="dark"] .fc {
+    background: var(--input-bg, #0f172a);
+    border-color: var(--border, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #f1f5f9);
+  }
+
+  [data-theme="dark"] .fc:focus {
+    border-color: var(--accent, #818cf8);
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, .2);
+  }
+
+  [data-theme="dark"] .fc option {
+    background: #1e293b;
+    color: #f1f5f9;
+  }
+
+  [data-theme="dark"] .register-title {
+    color: var(--text-primary, #f1f5f9);
+  }
+
+  [data-theme="dark"] .register-subtitle {
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  [data-theme="dark"] .fl {
+    color: var(--text-primary, #e2e8f0);
+  }
+
+  [data-theme="dark"] .fhelp {
+    color: var(--text-secondary, #64748b);
+  }
+
+  [data-theme="dark"] .form-divider {
+    border-top-color: var(--border, rgba(255, 255, 255, 0.06));
+  }
+
+  [data-theme="dark"] .auth-footer {
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  [data-theme="dark"] .btn-submit {
+    background: var(--accent, #818cf8);
+  }
+
+  [data-theme="dark"] .btn-submit:hover:not(:disabled) {
+    background: var(--accent-hover, #6366f1);
+  }
+
+  [data-theme="dark"] .toast-item {
+    background: #3b1a1a;
+    color: #fca5a5;
+    border-left-color: #f87171;
+  }
+
+  [data-theme="dark"] .toast-close {
+    color: #f87171;
   }
 
   .register-title {
@@ -36,12 +91,14 @@
     font-weight: 700;
     margin: 0 0 .2rem;
     color: var(--text-primary, #1a202c);
+    transition: color 0.3s ease;
   }
 
   .register-subtitle {
     font-size: .9rem;
     color: var(--text-secondary, #64748b);
     margin: 0 0 1.5rem;
+    transition: color 0.3s ease;
   }
 
   /* ---------- grid ---------- */
@@ -62,6 +119,7 @@
     font-weight: 600;
     margin-bottom: .35rem;
     color: var(--text-primary, #1a202c);
+    transition: color 0.3s ease;
   }
 
   .fc {
@@ -72,8 +130,9 @@
     border-radius: .45rem;
     background: var(--input-bg, #f8fafc);
     color: var(--text-primary, #1a202c);
-    transition: border-color .2s, box-shadow .2s;
+    transition: border-color .2s, box-shadow .2s, background .3s, color .3s;
     box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
   .fc:focus {
@@ -82,11 +141,24 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
   }
 
+  .fc::placeholder {
+    color: var(--text-secondary, #94a3b8);
+    opacity: 0.7;
+  }
+
   .fhelp {
     font-size: .72rem;
     color: var(--text-secondary, #94a3b8);
     margin-top: .25rem;
     display: block;
+    transition: color 0.3s ease;
+  }
+
+  .form-help {
+    font-size: .72rem;
+    margin-top: .25rem;
+    display: block;
+    transition: color 0.3s ease;
   }
 
   /* ---------- divider ---------- */
@@ -94,6 +166,7 @@
     border: none;
     border-top: 1px solid var(--border, #e9ecef);
     margin: .35rem 0 1.1rem;
+    transition: border-color 0.3s ease;
   }
 
   /* ---------- submit button ---------- */
@@ -114,6 +187,7 @@
     justify-content: center;
     gap: .5rem;
     min-height: 44px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
   .btn-submit:hover:not(:disabled) {
@@ -138,62 +212,25 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ---------- bottom-right toasts ---------- */
-  .toast-box {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    z-index: 99999;
-    display: flex;
-    flex-direction: column-reverse;
-    gap: .5rem;
-    max-width: 370px;
-    pointer-events: none;
+  /* ---------- password strength bar ---------- */
+  .pwd-bar-track {
+    height: 4px;
+    background: var(--border, #e2e8f0);
+    border-radius: 4px;
+    margin-top: .4rem;
+    overflow: hidden;
+    transition: background 0.3s ease;
   }
 
-  .toast-box > * { pointer-events: auto; }
-
-  .toast-item {
-    background: #fef2f2;
-    color: #991b1b;
-    border-left: 4px solid #ef4444;
-    padding: .7rem .9rem;
-    border-radius: .45rem;
-    font-size: .82rem;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, .14);
-    display: flex;
-    align-items: flex-start;
-    gap: .5rem;
-    animation: toastIn .35s ease-out;
-    line-height: 1.4;
-    word-break: break-word;
+  [data-theme="dark"] .pwd-bar-track {
+    background: rgba(255, 255, 255, 0.1);
   }
 
-  .toast-item svg { flex-shrink: 0; margin-top: 1px; }
-
-  .toast-close {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: #b91c1c;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0 0 0 .4rem;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  @keyframes toastIn {
-    from { transform: translateX(110%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-  }
-
-  .toast-item.hiding {
-    animation: toastOut .3s ease-in forwards;
-  }
-
-  @keyframes toastOut {
-    to { transform: translateX(120%); opacity: 0; }
+  .pwd-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    width: 0%;
+    transition: all .3s;
   }
 
   /* ---------- footer ---------- */
@@ -202,6 +239,7 @@
     margin-top: 1.25rem;
     font-size: .85rem;
     color: var(--text-secondary, #64748b);
+    transition: color 0.3s ease;
   }
 
   .auth-footer a {
@@ -212,11 +250,14 @@
 
   .auth-footer a:hover { text-decoration: underline; }
 
+  [data-theme="dark"] .auth-footer a {
+    color: var(--accent, #818cf8);
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 640px) {
     .register-card { padding: 1.5rem 1.15rem; }
     .row-2 { grid-template-columns: 1fr; }
-    .toast-box { left: 1rem; right: 1rem; max-width: none; }
   }
 </style>
 
@@ -272,6 +313,7 @@
                  maxlength="12" minlength="12"
                  oninput="this.value = this.value.toUpperCase()"
                  value="{{ form.roll_number.value|default:'' }}" required>
+          <span id="enrollHint" class="form-help"></span>
           <span class="fhelp">2 letters + 10 digits (e.g. XX0000000000)</span>
         </div>
         <div class="fg">
@@ -287,20 +329,20 @@
           <label class="fl">Year of Study *</label>
           <select name="year_of_study" class="fc" required>
             <option value="">— Select Year —</option>
-            <option value="1">1st Year</option>
-            <option value="2">2nd Year</option>
-            <option value="3">3rd Year</option>
-            <option value="4">4th Year</option>
+            <option value="1" {% if form.year_of_study.value == '1' %}selected{% endif %}>1st Year</option>
+            <option value="2" {% if form.year_of_study.value == '2' %}selected{% endif %}>2nd Year</option>
+            <option value="3" {% if form.year_of_study.value == '3' %}selected{% endif %}>3rd Year</option>
+            <option value="4" {% if form.year_of_study.value == '4' %}selected{% endif %}>4th Year</option>
           </select>
         </div>
         <div class="fg">
           <label class="fl">Degree Program *</label>
           <select name="degree" class="fc" required>
             <option value="">— Select Degree —</option>
-            <option value="bachelor">Bachelors</option>
-            <option value="master">Masters</option>
-            <option value="phd">PhD / Research</option>
-            <option value="diploma">Diploma</option>
+            <option value="bachelor" {% if form.degree.value == 'bachelor' %}selected{% endif %}>Bachelors</option>
+            <option value="master" {% if form.degree.value == 'master' %}selected{% endif %}>Masters</option>
+            <option value="phd" {% if form.degree.value == 'phd' %}selected{% endif %}>PhD / Research</option>
+            <option value="diploma" {% if form.degree.value == 'diploma' %}selected{% endif %}>Diploma</option>
           </select>
         </div>
       </div>
@@ -312,11 +354,16 @@
           <label class="fl">Password *</label>
           <input type="password" name="password1" class="fc"
                  placeholder="Create a password" required>
+          <div class="pwd-bar-track">
+            <div id="pwdFill" class="pwd-bar-fill"></div>
+          </div>
+          <span id="pwdLabel" class="form-help"></span>
         </div>
         <div class="fg">
           <label class="fl">Confirm Password *</label>
           <input type="password" name="password2" class="fc"
                  placeholder="Re-enter password" required>
+          <span id="matchLabel" class="form-help"></span>
         </div>
       </div>
 
@@ -331,78 +378,91 @@
   </div>
 </div>
 
-<!-- ==================== TOASTS ==================== -->
-<div class="toast-box" id="toastBox">
-  {% if messages %}
-    {% for msg in messages %}
-      <div class="toast-item" data-auto>
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="#ef4444"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/></svg>
-        <span>{{ msg }}</span>
-        <button class="toast-close" onclick="hideToast(this)">&times;</button>
-      </div>
-    {% endfor %}
-  {% endif %}
-
-  {% if form and form.errors %}
-    {% for field, errors in form.errors.items %}
-      {% for error in errors %}
-        <div class="toast-item" data-auto>
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="#ef4444"><path d="M10 0C4.48 0 0 4.48 0 10s4.48 10 10 10 10-4.48 10-10S15.52 0 10 0zm1 15H9v-2h2v2zm0-4H9V5h2v6z"/></svg>
-          <span><strong>{{ field|title }}:</strong> {{ error }}</span>
-          <button class="toast-close" onclick="hideToast(this)">&times;</button>
-        </div>
-      {% endfor %}
-    {% endfor %}
-  {% endif %}
-</div>
-
 <!-- ==================== JS ==================== -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    /* kill any stray error elements from base.html */
-    ['.messages','ul.messages','.errorlist','ul.errorlist',
-     '.alert','.alert-danger','.alert-error',
-     '.message-container','.django-messages','.notification-container'
-    ].forEach(function (s) {
-      document.querySelectorAll(s).forEach(function (el) {
-        if (!el.closest('.toast-box')) el.remove();
-      });
+(function() {
+  /* ===== Enrollment number validation ===== */
+  var rollInput = document.querySelector('input[name="roll_number"]');
+  if (rollInput) {
+    rollInput.addEventListener('input', function() {
+      var val  = this.value.toUpperCase();
+      this.value = val;
+      var valid = /^[A-Z]{2}[0-9]{10}$/.test(val);
+      var hint  = document.getElementById('enrollHint');
+      if (!hint) return;
+      if (val.length === 0) {
+        hint.textContent = '';
+      } else if (valid) {
+        hint.textContent = '✅ Valid enrollment number';
+        hint.style.color = 'var(--success, #10b981)';
+      } else {
+        hint.textContent = '❌ Format: 2 letters + 10 digits (' + val.length + '/12)';
+        hint.style.color = 'var(--danger, #ef4444)';
+      }
     });
+  }
 
-    /* --- sanitise toast text: strip real enrollment examples --- */
-    document.querySelectorAll('.toast-item span').forEach(function (span) {
-      // Replace any 2-letter+10-digit pattern with masked version
-      span.textContent = span.textContent.replace(
-        /\b[A-Z]{2}\d{10}\b/g, 'XX0000000000'
-      );
+  /* ===== Password strength ===== */
+  var pwd1Input = document.querySelector('input[name="password1"]');
+  if (pwd1Input) {
+    pwd1Input.addEventListener('input', function() {
+      var pwd   = this.value;
+      var score = 0;
+      if (pwd.length >= 8)          score++;
+      if (/[A-Z]/.test(pwd))        score++;
+      if (/[0-9]/.test(pwd))        score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+      var levels = [
+        { text: '',          color: 'transparent' },
+        { text: 'Weak',      color: 'var(--danger, #ef4444)'  },
+        { text: 'Fair',      color: 'var(--warning, #f59e0b)' },
+        { text: 'Good',      color: 'var(--info, #3b82f6)'    },
+        { text: 'Strong ✓',  color: 'var(--success, #10b981)' }
+      ];
+
+      var fill  = document.getElementById('pwdFill');
+      var label = document.getElementById('pwdLabel');
+      if (fill) {
+        fill.style.width      = (score * 25) + '%';
+        fill.style.background = levels[score].color;
+      }
+      if (label) {
+        label.textContent = pwd.length > 0 ? levels[score].text : '';
+        label.style.color = levels[score].color;
+      }
     });
-  });
+  }
 
-  /* button loading state */
+  /* ===== Password confirm match ===== */
+  var pwd2Input = document.querySelector('input[name="password2"]');
+  if (pwd2Input) {
+    pwd2Input.addEventListener('input', function() {
+      var p1    = document.querySelector('input[name="password1"]');
+      var label = document.getElementById('matchLabel');
+      if (!label) return;
+      if (!this.value) { label.textContent = ''; return; }
+      if (p1 && p1.value === this.value) {
+        label.textContent = '✅ Passwords match';
+        label.style.color = 'var(--success, #10b981)';
+      } else {
+        label.textContent = '❌ Passwords do not match';
+        label.style.color = 'var(--danger, #ef4444)';
+      }
+    });
+  }
+
+  /* ===== Button loading state ===== */
   var form = document.getElementById('regForm');
   var btn  = document.getElementById('submitBtn');
   var lbl  = document.getElementById('btnLabel');
 
-  form.addEventListener('submit', function () {
-    btn.disabled = true;
-    lbl.innerHTML = '<span class="btn-spinner"></span> Please wait a moment…';
-  });
-
-  /* toast dismiss */
-  function hideToast(el) {
-    var t = el.closest('.toast-item');
-    t.classList.add('hiding');
-    t.addEventListener('animationend', function () { t.remove(); });
+  if (form && btn && lbl) {
+    form.addEventListener('submit', function() {
+      btn.disabled  = true;
+      lbl.innerHTML = '<span class="btn-spinner"></span> Please wait a moment…';
+    });
   }
-
-  /* auto-dismiss after 7s */
-  document.querySelectorAll('.toast-item[data-auto]').forEach(function (t) {
-    setTimeout(function () {
-      if (t.parentNode) {
-        t.classList.add('hiding');
-        t.addEventListener('animationend', function () { t.remove(); });
-      }
-    }, 7000);
-  });
+})();
 </script>
 {% endblock %}

@@ -210,3 +210,82 @@ class ComplaintMessage(models.Model):
 
     def __str__(self):
         return f"[{self.sender_type}] on #{self.complaint.id}"
+
+class Notification(models.Model):
+    """In-app notifications for students and staff."""
+
+    class NotifType(models.TextChoices):
+        STATUS_CHANGE  = 'status_change',  'Status Changed'
+        ESCALATED      = 'escalated',      'Complaint Escalated'
+        STAFF_MESSAGE  = 'staff_message',  'Message from Staff'
+        STUDENT_UPDATE = 'student_update', 'Student Added Update'
+        RESOLVED       = 'resolved',       'Complaint Resolved'
+
+    user        = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    complaint   = models.ForeignKey(
+        Complaint, on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    notif_type  = models.CharField(max_length=20, choices=NotifType.choices)
+    title       = models.CharField(max_length=200)
+    message     = models.TextField()
+    is_read     = models.BooleanField(default=False)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.notif_type}] {self.user.email} — {self.title}"
+
+
+class AuditLog(models.Model):
+    """Permanent audit trail of all admin/staff actions."""
+
+    class ActionType(models.TextChoices):
+        STATUS_CHANGE    = 'status_change',    'Status Changed'
+        ACCOUNT_CREATED  = 'account_created',  'Account Created'
+        ACCOUNT_DELETED  = 'account_deleted',  'Account Deleted'
+        ACCOUNT_DEACTIVATED = 'account_deactivated', 'Account Deactivated'
+        ACCOUNT_REACTIVATED = 'account_reactivated', 'Account Reactivated'
+        BULK_UPDATE      = 'bulk_update',      'Bulk Update'
+        COMPLAINT_DELETED= 'complaint_deleted','Complaint Deleted'
+        LOGIN            = 'login',            'User Login'
+
+    performed_by  = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, related_name='audit_logs'
+    )
+    action_type   = models.CharField(max_length=30, choices=ActionType.choices)
+    target_model  = models.CharField(max_length=50, blank=True)
+    target_id     = models.PositiveIntegerField(null=True, blank=True)
+    description   = models.TextField()
+    ip_address    = models.GenericIPAddressField(null=True, blank=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.action_type}] by {self.performed_by} at {self.created_at}"
+
+    @classmethod
+    def log(cls, performed_by, action_type, description,
+            target_model='', target_id=None, request=None):
+        ip = None
+        if request:
+            x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded.split(',')[0] if x_forwarded else request.META.get('REMOTE_ADDR')
+        cls.objects.create(
+            performed_by=performed_by,
+            action_type=action_type,
+            description=description,
+            target_model=target_model,
+            target_id=target_id,
+            ip_address=ip,
+        )

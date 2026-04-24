@@ -17,6 +17,36 @@ def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 
+def landing_view(request):
+    """Landing page for logged-out users. Logged-in users go to feed."""
+    if request.user.is_authenticated:
+        return redirect('complaints:feed')
+
+    total     = Complaint.objects.count()
+    resolved  = Complaint.objects.filter(status='resolved').count()
+    pending   = Complaint.objects.filter(status='pending').count()
+    rate      = round(resolved / total * 100, 1) if total else 0
+
+    recent_resolved = Complaint.objects.filter(
+        status='resolved'
+    ).order_by('-updated_at')[:3]
+
+    return render(request, 'complaints/landing.html', {
+        'total':           total,
+        'resolved':        resolved,
+        'pending':         pending,
+        'rate':            rate,
+        'recent_resolved': recent_resolved,
+        'categories':      Complaint.Category.choices,
+        'steps': [
+            {'icon': '📝', 'title': 'Submit Anonymously',
+            'desc': 'Register with your enrollment number and submit your complaint. Your name is never shown publicly.'},
+            {'icon': '📡', 'title': 'Auto-Escalation',
+            'desc': 'If not resolved in 24 hours it escalates to HOD, then to Higher Authority at 48 hours.'},
+            {'icon': '✅', 'title': 'Get Resolved',
+            'desc': 'You receive email updates at every stage. Track your complaint ID anytime without login.'},
+        ],
+    })
 # ─── Feed ─────────────────────────────────────────────────────────────────────
 
 def feed_view(request):
@@ -1148,6 +1178,13 @@ def _notify_status_change(complaint):
         f"[CampusVoice] Complaint status: {complaint.get_status_display()}",
         html
     )
+    _create_notification(
+        user=complaint.created_by,
+        notif_type='status_change',
+        title=f"Complaint status updated: {complaint.get_status_display()}",
+        message=f"Your complaint '{complaint.title}' is now {complaint.get_status_display()}.",
+        complaint=complaint,
+    )
 
 
 def _notify_escalation(complaint):
@@ -1179,6 +1216,26 @@ def _notify_escalation(complaint):
         except Exception as e:
             print(f"Escalation notify error for {r.email}: {e}")
 
+    _create_notification(
+        user=complaint.created_by,
+        notif_type='escalated',
+        title=f"Complaint escalated to {level_label}",
+        message=f"Your complaint '{complaint.title}' has been escalated to {level_label} for faster resolution.",
+        complaint=complaint,
+    )
+
+
+
+def _create_notification(user, notif_type, title, message, complaint=None):
+    """Create an in-app notification for a user."""
+    from .models import Notification
+    Notification.objects.create(
+        user=user,
+        complaint=complaint,
+        notif_type=notif_type,
+        title=title,
+        message=message,
+    )
 
 def _notify_student_update(complaint, content):
     from users.models import CustomUser, Role
@@ -1215,3 +1272,311 @@ def _notify_staff_question(complaint, message_text, staff_user):
         f"[CampusVoice] Staff has a question about your complaint #{complaint.id}",
         html
     )
+
+# ─── Notifications ────────────────────────────────────────────────────────────
+
+@login_required
+def notifications_view(request):
+    from .models import Notification
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).select_related('complaint')[:50]
+
+    # Mark all as read when page is opened
+    Notification.objects.filter(
+        user=request.user, is_read=False
+    ).update(is_read=True)
+
+    return render(request, 'complaints/notifications.html', {
+        'notifications': notifications,
+    })
+
+
+@login_required
+def notifications_count_view(request):
+    """AJAX endpoint — returns unread notification count."""
+    from .models import Notification
+    count = Notification.objects.filter(
+        user=request.user, is_read=False
+    ).count()
+    return JsonResponse({'count': count})
+
+
+@login_required
+def mark_notification_read_view(request, pk):
+    from .models import Notification
+    Notification.objects.filter(
+        pk=pk, user=request.user
+    ).update(is_read=True)
+    return JsonResponse({'status': 'ok'})
+
+
+# ─── Audit Log ────────────────────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin, login_url='complaints:feed')
+def audit_log_view(request):
+    from .models import AuditLog
+    logs = AuditLog.objects.select_related('performed_by').order_by('-created_at')
+
+    search     = request.GET.get('q', '')
+    action     = request.GET.get('action', '')
+    date_from  = request.GET.get('date_from', '')
+
+    if search:
+        logs = logs.filter(
+            Q(description__icontains=search) |
+            Q(performed_by__email__icontains=search) |
+            Q(performed_by__first_name__icontains=search)
+        )
+    if action:
+        logs = logs.filter(action_type=action)
+    if date_from:
+        import datetime
+        try:
+            logs = logs.filter(
+                created_at__date__gte=datetime.date.fromisoformat(date_from)
+            )
+        except ValueError:
+            pass
+
+    from .models import AuditLog as AL
+    return render(request, 'complaints/audit_log.html', {
+        'logs':         logs[:200],
+        'action_types': AL.ActionType.choices,
+        'search_query': search,
+        'active_action':action,
+        'date_from':    date_from,
+    })
+
+
+# ─── Quick Inline Status Update (AJAX) ───────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin, login_url='complaints:feed')
+def quick_update_status_view(request, pk):
+    """AJAX — update status directly from admin table row."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    complaint  = get_object_or_404(Complaint, pk=pk)
+    new_status = request.POST.get('status', '').strip()
+
+    valid_statuses = [s[0] for s in Complaint.Status.choices]
+    if new_status not in valid_statuses:
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    old_status = complaint.status
+    complaint.status = new_status
+
+    # Auto-add signed remark for quick update
+    from django.utils import timezone
+    timestamp = timezone.now().strftime('%d %b %Y %H:%M')
+    complaint.admin_remark = (complaint.admin_remark or '') + (
+        f"\n\n— [Admin Quick Update] {request.user.get_full_name()} | {timestamp}\n"
+        f"Status changed to: {dict(Complaint.Status.choices).get(new_status)}"
+    )
+    complaint.save()
+
+    if new_status != old_status:
+        try:
+            _notify_status_change(complaint)
+        except Exception as e:
+            print(f"Notify error: {e}")
+
+    # Audit log
+    from .models import AuditLog
+    AuditLog.log(
+        performed_by=request.user,
+        action_type='status_change',
+        description=f"Quick updated complaint #{pk} from {old_status} to {new_status}",
+        target_model='Complaint',
+        target_id=pk,
+        request=request,
+    )
+
+    return JsonResponse({
+        'status':       'ok',
+        'new_status':   new_status,
+        'status_label': dict(Complaint.Status.choices).get(new_status),
+        'badge_class':  complaint.status_badge_class,
+    })
+
+
+# ─── Bulk Status Update ───────────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin, login_url='complaints:feed')
+def bulk_update_view(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    import json as _json
+    try:
+        data       = _json.loads(request.body)
+        ids        = data.get('ids', [])
+        new_status = data.get('status', '')
+    except Exception:
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    if not ids or not new_status:
+        return JsonResponse({'error': 'Missing ids or status'}, status=400)
+
+    valid_statuses = [s[0] for s in Complaint.Status.choices]
+    if new_status not in valid_statuses:
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    from django.utils import timezone
+    timestamp   = timezone.now().strftime('%d %b %Y %H:%M')
+    complaints  = Complaint.objects.filter(pk__in=ids)
+    updated     = 0
+
+    for complaint in complaints:
+        old_status = complaint.status
+        complaint.status = new_status
+        complaint.admin_remark = (complaint.admin_remark or '') + (
+            f"\n\n— [Admin Bulk Update] {request.user.get_full_name()} | {timestamp}\n"
+            f"Status changed to: {dict(Complaint.Status.choices).get(new_status)}"
+        )
+        complaint.save()
+        if new_status != old_status:
+            try:
+                _notify_status_change(complaint)
+            except Exception as e:
+                print(f"Bulk notify error #{complaint.id}: {e}")
+        updated += 1
+
+    # Audit log
+    from .models import AuditLog
+    AuditLog.log(
+        performed_by=request.user,
+        action_type='bulk_update',
+        description=f"Bulk updated {updated} complaints to status: {new_status}",
+        target_model='Complaint',
+        request=request,
+    )
+
+    return JsonResponse({'status': 'ok', 'updated': updated})
+
+
+# ─── Staff Performance Metrics ────────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin, login_url='complaints:feed')
+def staff_performance_view(request):
+    from users.models import CustomUser, Role
+    from django.utils import timezone
+    import datetime
+
+    staff_users = CustomUser.objects.filter(
+        role__in=[Role.DEPT_USER, Role.HOD, Role.AUTHORITY],
+        is_active=True
+    )
+
+    performance = []
+    for staff in staff_users:
+        dept = staff.department
+
+        # Complaints handled by this staff's department at their level
+        if staff.role == Role.DEPT_USER:
+            handled = Complaint.objects.filter(
+                created_by__department=dept
+            )
+        elif staff.role == Role.HOD:
+            handled = Complaint.objects.filter(
+                created_by__department=dept,
+                escalation_level__gte=2
+            )
+        else:
+            handled = Complaint.objects.filter(escalation_level__gte=3)
+
+        total    = handled.count()
+        resolved = handled.filter(status='resolved').count()
+        escalated= handled.filter(escalation_level__gt=1).count()
+        rate     = round(resolved / total * 100, 1) if total else 0
+
+        # Average resolution time
+        avg_hours = 0
+        res_complaints = handled.filter(status='resolved')
+        if res_complaints.exists():
+            total_h = sum(
+                (c.updated_at - c.created_at).total_seconds() / 3600
+                for c in res_complaints
+            )
+            avg_hours = round(total_h / res_complaints.count(), 1)
+
+        performance.append({
+            'staff':     staff,
+            'total':     total,
+            'resolved':  resolved,
+            'escalated': escalated,
+            'rate':      rate,
+            'avg_hours': avg_hours,
+        })
+
+    performance.sort(key=lambda x: x['rate'], reverse=True)
+
+    return render(request, 'complaints/staff_performance.html', {
+        'performance': performance,
+    })
+
+
+# ─── Search Student by Enrollment ────────────────────────────────────────────
+
+@login_required
+@user_passes_test(is_admin, login_url='complaints:feed')
+def search_student_view(request):
+    from users.models import CustomUser, Role
+    student    = None
+    complaints = None
+    query      = request.GET.get('q', '').strip()
+
+    if query:
+        student = CustomUser.objects.filter(
+            Q(roll_number__iexact=query) |
+            Q(email__iexact=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
+        ).filter(role=Role.STUDENT).first()
+
+        if student:
+            complaints = student.complaints.annotate(
+                upvote_count=Count('upvotes')
+            ).order_by('-created_at')
+
+    return render(request, 'complaints/search_student.html', {
+        'student':    student,
+        'complaints': complaints,
+        'query':      query,
+    })
+
+
+# ─── QR Code per Complaint ────────────────────────────────────────────────────
+
+def complaint_qr_view(request, pk):
+    """Generate QR code for a complaint's public tracker URL."""
+    import qrcode
+    import qrcode.image.svg
+    from io import BytesIO
+    from django.http import HttpResponse
+
+    complaint  = get_object_or_404(Complaint, pk=pk)
+    track_url  = request.build_absolute_uri(f'/track/?id={pk}')
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=8,
+        border=2,
+    )
+    qr.add_data(track_url)
+    qr.make(fit=True)
+
+    img    = qr.make_image(fill_color="#1A3BC0", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    response = HttpResponse(buffer, content_type='image/png')
+    response['Content-Disposition'] = f'inline; filename="complaint_{pk}_qr.png"'
+    return response

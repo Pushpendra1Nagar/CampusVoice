@@ -326,6 +326,121 @@ select.form-control { cursor: pointer; }
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
 .footer { border-top: 1px solid var(--border); padding: 2rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
 
+/* ─── Mobile Hamburger ────────────────────────────────────────────────── */
+.mobile-controls { display: none; }
+
+.hamburger {
+  background: var(--bg-input);
+  border: none;
+  border-radius: var(--radius-sm);
+  width: 36px; height: 36px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+}
+.hamburger span {
+  display: block;
+  width: 18px; height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all .25s ease;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.mobile-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 199;
+}
+.mobile-overlay.show { display: block; }
+
+.mobile-drawer {
+  position: fixed;
+  top: 0; right: -280px;
+  width: 280px; height: 100vh;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  z-index: 200;
+  transition: right .25s ease;
+  overflow-y: auto;
+}
+.mobile-drawer.open { right: 0; }
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: .95rem;
+}
+.drawer-links { padding: .75rem 0; }
+.drawer-link {
+  display: block;
+  padding: .75rem 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: .9rem;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+}
+.drawer-link:hover {
+  background: var(--bg-input);
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-controls { display: flex; }
+  .feed-layout { grid-template-columns: 1fr; }
+  .feed-filters { position: static; }
+}
+
+/* ─── Loading Spinner ─────────────────────────────────────────────────── */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px; height: 16px;
+  top: 50%; left: 50%;
+  margin-top: -8px; margin-left: -8px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Complaint Card Urgency Border ────────────────────────────────────── */
+.complaint-card { border-left: 3px solid transparent; }
+.complaint-card.urgency-fresh     { border-left-color: var(--success); }
+.complaint-card.urgency-approaching{ border-left-color: var(--warning); }
+.complaint-card.urgency-critical  { border-left-color: var(--danger); }
+.complaint-card.urgency-resolved  { border-left-color: var(--border); opacity: .85; }
+
+/* ─── Status dot badges ──────────────────────────────────────────────── */
+.badge::before { margin-right: 4px; font-size: .65rem; }
+.badge-warning::before  { content: "🟡"; }
+.badge-info::before     { content: "🔵"; }
+.badge-success::before  { content: "🟢"; }
+.badge-danger::before   { content: "🔴"; }
+
+/* ─── Dark mode flash prevention (inline in head, CSS version) ─────────── */
+[data-theme="dark"] body { background: #0d0f1a; }
+
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .feed-layout { grid-template-columns: 1fr; }

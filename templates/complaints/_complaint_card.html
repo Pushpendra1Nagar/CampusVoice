@@ -1,4 +1,8 @@
-<div class="complaint-card" style="{% if complaint.status == 'resolved' %}opacity:.85;{% endif %}">
+<div class="complaint-card"
+     data-hours="{{ complaint.hours_at_current_level|floatformat:1 }}"
+     data-status="{{ complaint.status }}"
+     style="{% if complaint.status == 'resolved' %}opacity:.85;{% endif %}">
+
   <div class="complaint-header">
     <div>
       <a href="{% url 'complaints:detail' complaint.pk %}" class="complaint-title">
@@ -18,7 +22,9 @@
       {{ complaint.created_at|timesince }} ago
     </span>
   </div>
+
   <p class="complaint-excerpt">{{ complaint.description }}</p>
+
   <div class="complaint-footer">
     <span class="complaint-anon">🔒 Anonymous Student</span>
     {% if user.is_authenticated %}
@@ -27,10 +33,27 @@
         ▲ <span class="upvote-count">{{ complaint.upvote_count }}</span>
       </button>
     {% else %}
-      <button class="upvote-btn" data-id="{{ complaint.pk }}"
+      <button class="upvote-btn"
+              data-id="{{ complaint.pk }}"
               data-login="{% url 'users:login' %}">
         ▲ <span class="upvote-count">{{ complaint.upvote_count }}</span>
       </button>
     {% endif %}
   </div>
+
+  {# ── Urgency hint — only for active complaints ── #}
+  {% if complaint.status == 'pending' or complaint.status == 'in_progress' %}
+    {% with hours=complaint.hours_at_current_level %}
+      {% if hours >= 20 %}
+      <div style="font-size:.72rem;color:var(--danger);margin-top:.4rem;font-weight:600;">
+        🔴 {{ hours|floatformat:0 }}h at current level — escalating soon
+      </div>
+      {% elif hours >= 12 %}
+      <div style="font-size:.72rem;color:var(--warning);margin-top:.4rem;">
+        ⚠️ {{ hours|floatformat:0 }}h at current level
+      </div>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+
 </div>

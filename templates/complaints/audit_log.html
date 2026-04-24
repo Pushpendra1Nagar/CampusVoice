@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;
+       margin-bottom:1.5rem;">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+        📋 Admin Audit Log
+      </h1>
+      <p style="color:var(--text-secondary);font-size:.875rem;margin-top:.25rem;">
+        Permanent record of all admin actions — cannot be edited or deleted
+      </p>
+    </div>
+    <a href="{% url 'complaints:admin_dashboard' %}" class="btn btn-secondary">
+      ← Dashboard
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;
+        margin-bottom:1.5rem;align-items:center;">
+    <input type="text" name="q" value="{{ search_query }}"
+           class="form-control" placeholder="Search by description or user..."
+           style="flex:1;min-width:200px;">
+    <select name="action" class="form-control" style="width:180px;">
+      <option value="">All Actions</option>
+      {% for val,label in action_types %}
+        <option value="{{ val }}" {% if active_action == val %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="date" name="date_from" value="{{ date_from }}"
+           class="form-control" style="width:160px;">
+    <button type="submit" class="btn btn-primary-solid">Filter</button>
+    <a href="{% url 'complaints:audit_log' %}" class="btn btn-secondary">Reset</a>
+  </form>
+
+  {% if logs %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+      <thead>
+        <tr style="background:var(--bg-input);border-bottom:1px solid var(--border);">
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Time</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Performed By</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Action</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">Description</th>
+          <th style="padding:.75rem 1rem;text-align:left;font-weight:600;
+               color:var(--text-secondary);">IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.65rem 1rem;color:var(--text-muted);
+               font-size:.78rem;white-space:nowrap;">
+            {{ log.created_at|date:"d M Y" }}<br>
+            <span style="color:var(--text-muted);">{{ log.created_at|date:"H:i" }}</span>
+          </td>
+          <td style="padding:.65rem 1rem;">
+            <div style="font-weight:600;font-size:.85rem;">
+              {{ log.performed_by.get_full_name|default:"Deleted User" }}
+            </div>
+            <div style="font-size:.75rem;color:var(--text-muted);">
+              {{ log.performed_by.email|default:"—" }}
+            </div>
+          </td>
+          <td style="padding:.65rem 1rem;">
+            <span class="badge
+              {% if 'delete' in log.action_type %}badge-danger
+              {% elif 'create' in log.action_type %}badge-success
+              {% elif 'bulk' in log.action_type %}badge-warning
+              {% else %}badge-info{% endif %}">
+              {{ log.get_action_type_display }}
+            </span>
+          </td>
+          <td style="padding:.65rem 1rem;color:var(--text-secondary);
+               font-size:.83rem;max-width:300px;">
+            {{ log.description }}
+          </td>
+          <td style="padding:.65rem 1rem;color:var(--text-muted);font-size:.78rem;">
+            {{ log.ip_address|default:"—" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-title">No audit logs found</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

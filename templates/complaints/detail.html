@@ -214,6 +214,11 @@
          style="color:var(--danger);border-color:var(--danger);">
         🗑️ Delete
       </a>
+      <a href="{% url 'complaints:qr_code' complaint.pk %}"
+   target="_blank"
+   class="btn btn-secondary">
+  📱 QR Code
+</a>
     {% endif %}
     {% if complaint.status not in 'resolved,rejected,withdrawn' %}
       <a href="{% url 'complaints:withdraw' complaint.pk %}" class="btn btn-secondary"

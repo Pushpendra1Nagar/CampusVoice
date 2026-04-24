@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Welcome to CampusVoice{% endblock %}
+{% block content %}
+
+<!-- ─── Hero ──────────────────────────────────────────────────────────── -->
+<div style="text-align:center;padding:4rem 1rem 3rem;">
+  <div style="display:inline-block;background:var(--accent-light);
+       color:var(--accent);border-radius:var(--radius-pill);
+       padding:.35rem 1rem;font-size:.8rem;font-weight:600;margin-bottom:1.25rem;">
+    🔒 100% Anonymous · Safe · Transparent
+  </div>
+
+  <h1 style="font-family:'Space Grotesk',sans-serif;font-size:2.8rem;
+      font-weight:700;line-height:1.2;margin-bottom:1rem;max-width:620px;margin-inline:auto;">
+    Your Voice.<br>
+    <span style="color:var(--accent);">Protected.</span>
+  </h1>
+
+  <p style="color:var(--text-secondary);font-size:1.05rem;max-width:500px;
+      margin:0 auto 2rem;line-height:1.7;">
+    Submit complaints about hostel, academics, ragging, or infrastructure —
+    anonymously. Track them in real time. Hold your college accountable.
+  </p>
+
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+    <a href="{% url 'users:register' %}" class="btn btn-primary-solid"
+       style="padding:.75rem 2rem;font-size:1rem;">
+      Register Free →
+    </a>
+    <a href="{% url 'complaints:feed' %}" class="btn btn-secondary"
+       style="padding:.75rem 2rem;font-size:1rem;">
+      Browse Feed
+    </a>
+  </div>
+</div>
+
+<!-- ─── Live Stats ─────────────────────────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;
+     max-width:700px;margin:0 auto 4rem;">
+  <div class="card" style="text-align:center;padding:1.5rem;">
+    <div style="font-size:2.5rem;font-weight:700;color:var(--accent);">{{ total }}</div>
+    <div style="color:var(--text-secondary);font-size:.875rem;margin-top:.3rem;">
+      Complaints Raised
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:1.5rem;">
+    <div style="font-size:2.5rem;font-weight:700;color:var(--success);">{{ resolved }}</div>
+    <div style="color:var(--text-secondary);font-size:.875rem;margin-top:.3rem;">
+      Issues Resolved
+    </div>
+  </div>
+  <div class="card" style="text-align:center;padding:1.5rem;">
+    <div style="font-size:2.5rem;font-weight:700;
+         color:{% if rate >= 75 %}var(--success){% elif rate >= 40 %}var(--warning){% else %}var(--danger){% endif %};">
+      {{ rate }}%
+    </div>
+    <div style="color:var(--text-secondary);font-size:.875rem;margin-top:.3rem;">
+      Resolution Rate
+    </div>
+  </div>
+</div>
+
+<!-- ─── How it works ──────────────────────────────────────────────────── -->
+<div style="max-width:800px;margin:0 auto 4rem;">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;
+      font-weight:700;text-align:center;margin-bottom:2rem;">
+    How CampusVoice Works
+  </h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+    {% for step in steps %}
+    <div class="card" style="text-align:center;padding:1.5rem;">
+      <div style="font-size:2.5rem;margin-bottom:.75rem;">{{ step.icon }}</div>
+      <div style="font-weight:700;margin-bottom:.4rem;">{{ step.title }}</div>
+      <div style="color:var(--text-secondary);font-size:.85rem;line-height:1.6;">
+        {{ step.desc }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ─── Categories ────────────────────────────────────────────────────── -->
+<div style="max-width:800px;margin:0 auto 4rem;">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;
+      font-weight:700;text-align:center;margin-bottom:1.5rem;">
+    What Can You Report?
+  </h2>
+  <div style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;">
+    {% for val, label in categories %}
+    <a href="{% url 'complaints:feed' %}?category={{ val }}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;
+              background:var(--bg-card);border:1.5px solid var(--border);
+              border-radius:var(--radius-pill);text-decoration:none;
+              color:var(--text-primary);font-size:.875rem;font-weight:500;
+              transition:all .15s;">
+      {% if val == 'hostel' %}🏠{% elif val == 'academics' %}📚
+      {% elif val == 'infrastructure' %}🏗️{% elif val == 'library' %}📖
+      {% elif val == 'canteen' %}🍽️{% elif val == 'sports' %}⚽
+      {% elif val == 'harassment' %}🚨{% else %}📋{% endif %}
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ─── Recently Resolved ─────────────────────────────────────────────── -->
+{% if recent_resolved %}
+<div style="max-width:700px;margin:0 auto 4rem;">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem;
+      font-weight:700;text-align:center;margin-bottom:1.5rem;">
+    ✅ Recently Resolved
+  </h2>
+  {% for c in recent_resolved %}
+  <div class="card" style="margin-bottom:.75rem;opacity:.9;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-weight:600;font-size:.9rem;">
+          {{ c.category_icon }} {{ c.title|truncatechars:60 }}
+        </span>
+        <div style="margin-top:.3rem;">
+          <span class="badge badge-accent">{{ c.get_category_display }}</span>
+          <span class="badge badge-success" style="margin-left:.3rem;">Resolved</span>
+        </div>
+      </div>
+      <span style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;">
+        {{ c.updated_at|timesince }} ago
+      </span>
+    </div>
+  </div>
+  {% endfor %}
+  <div style="text-align:center;margin-top:1rem;">
+    <a href="{% url 'complaints:feed' %}?status=resolved"
+       style="color:var(--accent);font-size:.875rem;">
+      View all resolved complaints →
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<!-- ─── CTA ───────────────────────────────────────────────────────────── -->
+<div style="text-align:center;background:var(--accent-light);
+     border-radius:var(--radius);padding:3rem 2rem;max-width:700px;margin:0 auto 2rem;">
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;
+      font-weight:700;margin-bottom:.75rem;">
+    Have a Problem? Speak Up.
+  </h2>
+  <p style="color:var(--text-secondary);margin-bottom:1.5rem;">
+    Your identity is always protected. Only admins can see who filed a complaint.
+  </p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+    <a href="{% url 'users:register' %}" class="btn btn-primary-solid"
+       style="padding:.7rem 1.75rem;">
+      Create Account
+    </a>
+    <a href="{% url 'complaints:public_stats' %}" class="btn btn-secondary"
+       style="padding:.7rem 1.75rem;">
+      View Stats
+    </a>
+  </div>
+</div>
+
+{% endblock %}

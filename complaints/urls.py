@@ -5,6 +5,8 @@ app_name = 'complaints'
 
 urlpatterns = [
     # Public
+
+    path('home/', views.landing_view, name='landing'),
     path('',                         views.feed_view,                   name='feed'),
     path('track/',                   views.complaint_tracker_view,      name='track'),
     path('<int:pk>/',                views.complaint_detail_view,       name='detail'),
@@ -38,4 +40,15 @@ urlpatterns = [
     path('stats/',             views.public_stats_view,        name='public_stats'),
     path('export/pdf/',        views.export_pdf_view,          name='export_pdf'),
     path('weekly-digest/',     views.send_weekly_digest_view,  name='weekly_digest'),
+
+    # Phase 5 — Advanced
+    path('notifications/',              views.notifications_view,          name='notifications'),
+    path('notifications/count/',        views.notifications_count_view,    name='notifications_count'),
+    path('notifications/<int:pk>/read/',views.mark_notification_read_view, name='notification_read'),
+    path('audit-log/',                  views.audit_log_view,              name='audit_log'),
+    path('admin-panel/<int:pk>/quick-update/', views.quick_update_status_view, name='quick_update'),
+    path('bulk-update/',                views.bulk_update_view,            name='bulk_update'),
+    path('staff-performance/',          views.staff_performance_view,      name='staff_performance'),
+    path('search-student/',             views.search_student_view,         name='search_student'),
+    path('<int:pk>/qr/',                views.complaint_qr_view,           name='qr_code'),
 ]

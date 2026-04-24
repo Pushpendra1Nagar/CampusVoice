@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:0 auto;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;
+       margin-bottom:1.5rem;">
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;">
+      🔔 Notifications
+    </h1>
+    <span style="font-size:.85rem;color:var(--text-muted);">
+      All notifications marked as read on view
+    </span>
+  </div>
+
+  {% if notifications %}
+    {% for notif in notifications %}
+    <div class="card" style="margin-bottom:.75rem;padding:1rem 1.25rem;
+         {% if not notif.is_read %}border-left:3px solid var(--accent);{% endif %}
+         transition:all .15s;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;
+           gap:1rem;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">
+            <span style="font-size:1rem;">
+              {% if notif.notif_type == 'status_change' %}📋
+              {% elif notif.notif_type == 'escalated' %}⚠️
+              {% elif notif.notif_type == 'staff_message' %}💬
+              {% elif notif.notif_type == 'student_update' %}📝
+              {% elif notif.notif_type == 'resolved' %}✅
+              {% else %}🔔{% endif %}
+            </span>
+            <span style="font-weight:600;font-size:.9rem;">{{ notif.title }}</span>
+            {% if not notif.is_read %}
+              <span class="badge badge-accent" style="font-size:.65rem;">New</span>
+            {% endif %}
+          </div>
+          <p style="color:var(--text-secondary);font-size:.85rem;margin:0;">
+            {{ notif.message }}
+          </p>
+          {% if notif.complaint %}
+          <a href="{% url 'complaints:detail' notif.complaint.pk %}"
+             style="color:var(--accent);font-size:.8rem;margin-top:.4rem;display:inline-block;">
+            View Complaint #{{ notif.complaint.id }} →
+          </a>
+          {% endif %}
+        </div>
+        <span style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;
+              flex-shrink:0;">
+          {{ notif.created_at|timesince }} ago
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">🔔</div>
+      <div class="empty-state-title">No notifications yet</div>
+      <p class="empty-state-text">
+        You'll be notified when your complaint status changes or staff replies.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

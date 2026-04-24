@@ -249,6 +249,15 @@ def create_staff_view(request):
                 is_email_verified=True,
                 is_staff=(role == 'admin'),
             )
+            from complaints.models import AuditLog
+            AuditLog.log(
+                performed_by=request.user,
+                action_type='account_created',
+                description=f"Created {role} account for {email} ({first_name} {last_name})",
+                target_model='CustomUser',
+                target_id=user.pk,
+                request=request,
+            )
         except Exception as e:
             messages.error(request, f"Failed to create user: {e}")
             return render(request, 'users/create_staff.html', {
@@ -447,6 +456,17 @@ def deactivate_staff_view(request, pk):
     from .models import Role
     user = get_object_or_404(CustomUser, pk=pk)
 
+    from complaints.models import AuditLog
+    action = 'account_deactivated' if user.is_active else 'account_reactivated'
+    AuditLog.log(
+        performed_by=request.user,
+        action_type=action,
+        description=f"{'Deactivated' if user.is_active else 'Reactivated'} account: {user.get_full_name()} ({user.email})",
+        target_model='CustomUser',
+        target_id=user.pk,
+        request=request,
+    )
+
     # Prevent admin from deactivating themselves
     if user == request.user:
         messages.error(request, "You cannot deactivate your own account.")
@@ -485,6 +505,14 @@ def delete_staff_view(request, pk):
 
     if request.method == 'POST':
         name = user.get_full_name()
+        from complaints.models import AuditLog
+        AuditLog.log(
+            performed_by=request.user,
+            action_type='account_deleted',
+            description=f"Deleted {user.role} account: {user.get_full_name()} ({user.email})",
+            target_model='CustomUser',
+            request=request,
+        )
         user.delete()
         messages.success(request, f"Account for {name} has been permanently deleted.")
         return redirect('users:manage_staff')
