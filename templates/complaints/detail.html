@@ -58,51 +58,81 @@
     {% endif %}
   </div>
 
+  <!-- ─── QR Code Section ────────────────────────────────────────────── -->
+  {% if user.is_authenticated %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h3 style="font-weight:700;font-size:.95rem;margin-bottom:.35rem;">📱 Share & Track</h3>
+        <p style="font-size:.8rem;color:var(--text-secondary);margin:0;">
+          Scan this QR code to track this complaint's status from any device.
+        </p>
+      </div>
+      <div style="text-align:center;">
+        <a href="{% url 'complaints:qr_code' complaint.pk %}" target="_blank"
+           title="Click to open full size">
+          <img src="{% url 'complaints:qr_code' complaint.pk %}"
+               alt="QR Code for Complaint #{{ complaint.id }}"
+               style="width:120px;height:120px;border-radius:8px;
+                      border:2px solid var(--border);padding:4px;
+                      background:#fff;cursor:pointer;
+                      transition:transform .2s ease, box-shadow .2s ease;"
+               onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'"
+               onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'">
+        </a>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-top:.35rem;">
+          Complaint #{{ complaint.id }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ─── Complaint Timeline ─────────────────────────────────────────── -->
   <div class="card" style="margin-bottom:1.25rem;">
     <h3 style="font-weight:700;font-size:.95rem;margin-bottom:1.25rem;">📋 Complaint Journey</h3>
-<div style="position:relative;padding-left:2rem;">
-  <div style="position:absolute;left:.6rem;top:0;bottom:0;width:2px;
-       background:var(--border);"></div>
+    <div style="position:relative;padding-left:2rem;">
+      <div style="position:absolute;left:.6rem;top:0;bottom:0;width:2px;
+           background:var(--border);"></div>
 
-  <!-- Step 1: Submitted -->
-  <div style="position:relative;margin-bottom:1.25rem;">
-    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
-         background:var(--success);border:2px solid var(--bg-card);"></div>
-    <div style="font-weight:600;font-size:.875rem;">✅ Submitted</div>
-    <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.created_at|date:"d M Y, H:i" }}</div>
-    <div style="font-size:.78rem;color:var(--text-secondary);">Complaint submitted anonymously</div>
-  </div>
+      <!-- Step 1: Submitted -->
+      <div style="position:relative;margin-bottom:1.25rem;">
+        <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+             background:var(--success);border:2px solid var(--bg-card);"></div>
+        <div style="font-weight:600;font-size:.875rem;">✅ Submitted</div>
+        <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.created_at|date:"d M Y, H:i" }}</div>
+        <div style="font-size:.78rem;color:var(--text-secondary);">Complaint submitted anonymously</div>
+      </div>
 
-  <!-- Step 2: Assigned to Department -->
-  <div style="position:relative;margin-bottom:1.25rem;">
-    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
-         background:var(--info);border:2px solid var(--bg-card);"></div>
-    <div style="font-weight:600;font-size:.875rem;">👤 Assigned to Department</div>
-    <div style="font-size:.78rem;color:var(--text-secondary);">Being reviewed by department staff</div>
-  </div>
+      <!-- Step 2: Assigned to Department -->
+      <div style="position:relative;margin-bottom:1.25rem;">
+        <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+             background:var(--info);border:2px solid var(--bg-card);"></div>
+        <div style="font-weight:600;font-size:.875rem;">👤 Assigned to Department</div>
+        <div style="font-size:.78rem;color:var(--text-secondary);">Being reviewed by department staff</div>
+      </div>
 
- {% if complaint.escalation_level >= 2 %}
-  <div style="position:relative;margin-bottom:1.25rem;">
-    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
-         background:var(--warning);border:2px solid var(--bg-card);"></div>
-    <div style="font-weight:600;font-size:.875rem;">🎓 Escalated to HOD</div>
-    {% if complaint.escalated_at %}
-    <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.escalated_at|date:"d M Y, H:i" }}</div>
-    {% endif %}
-    <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 24 hours — HOD notified</div>
-  </div>
-  {% endif %}
+      {% if complaint.escalation_level >= 2 %}
+      <div style="position:relative;margin-bottom:1.25rem;">
+        <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+             background:var(--warning);border:2px solid var(--bg-card);"></div>
+        <div style="font-weight:600;font-size:.875rem;">🎓 Escalated to HOD</div>
+        {% if complaint.escalated_at %}
+        <div style="font-size:.78rem;color:var(--text-muted);">{{ complaint.escalated_at|date:"d M Y, H:i" }}</div>
+        {% endif %}
+        <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 24 hours — HOD notified</div>
+      </div>
+      {% endif %}
 
-  {% if complaint.escalation_level >= 3 %}
-  <div style="position:relative;margin-bottom:1.25rem;">
-    <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
-         background:var(--danger);border:2px solid var(--bg-card);"></div>
-    <div style="font-weight:600;font-size:.875rem;">🏛️ Escalated to Higher Authority</div>
-    <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 48 hours — Principal/Dean notified</div>
-  </div>
-  {% endif %}
-  
+      {% if complaint.escalation_level >= 3 %}
+      <div style="position:relative;margin-bottom:1.25rem;">
+        <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
+             background:var(--danger);border:2px solid var(--bg-card);"></div>
+        <div style="font-weight:600;font-size:.875rem;">🏛️ Escalated to Higher Authority</div>
+        <div style="font-size:.78rem;color:var(--text-secondary);">Not resolved in 48 hours — Principal/Dean notified</div>
+      </div>
+      {% endif %}
+
       <div style="position:relative;margin-bottom:.5rem;">
         <div style="position:absolute;left:-1.45rem;width:12px;height:12px;border-radius:50%;
              background:{% if complaint.status == 'resolved' %}var(--success)
@@ -214,11 +244,6 @@
          style="color:var(--danger);border-color:var(--danger);">
         🗑️ Delete
       </a>
-      <a href="{% url 'complaints:qr_code' complaint.pk %}"
-   target="_blank"
-   class="btn btn-secondary">
-  📱 QR Code
-</a>
     {% endif %}
     {% if complaint.status not in 'resolved,rejected,withdrawn' %}
       <a href="{% url 'complaints:withdraw' complaint.pk %}" class="btn btn-secondary"
@@ -226,6 +251,11 @@
         ↩️ Withdraw
       </a>
     {% endif %}
+    <a href="{% url 'complaints:qr_code' complaint.pk %}"
+       target="_blank"
+       class="btn btn-secondary">
+      📱 QR Code
+    </a>
   </div>
   {% endif %}
 
